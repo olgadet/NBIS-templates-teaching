@@ -51,11 +51,12 @@
 \usepackage{alltt}
 
 \usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
-% \geometry{a4paper,
-%  total={170mm,257mm},
-%  left=20mm,
-%  top=20mm,
-%  bottom=40mm}                   % ... or a4paper or a5paper or ... 
+\geometry{a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ right=20mm,
+ top=20mm,
+ bottom=40mm}                   % ... or a4paper or a5paper or ...
 \geometry{landscape}                % Activate for for rotated page geometry
 \usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
 \usepackage{graphicx}
@@ -65,6 +66,7 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{colortbl, xcolor}
+\usepackage{array}
 
 
 \setlength{\columnsep}{1cm}
@@ -97,6 +99,16 @@
     tabsize=2
 }
 
+
+
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\
+    \arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\
+    \arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\
+    \arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{P}[1]{>{\raggedright\tabularxbackslash}p{#1}}
+
 %\usepackage{pdflscape}
  \usepackage{rotating}
   
@@ -122,7 +134,7 @@
 \renewcommand{\headrulewidth}{0pt} % remove rule below header
 
 %% DEFINE TOOLS AND VARIABLES
-\newcommand{\courseName}{ChIP-seq data analysis, 1hp}
+\newcommand{\courseName}{ChIP-seq data analysis, 1 hp}
 \newcommand{\courseLocation}{Stockholm}
 \newcommand{\courseDate}{2017-11-23, 2017-11-24}
 \newcommand{\courseLeaderA}{Olga Dethlefsen}
@@ -134,7 +146,6 @@
 %% BEGIN DOCUMENT
 \IfFileExists{upquote.sty}{\usepackage{upquote}}{}
 \begin{document}
-%\begin{landscape}
 
 
 
@@ -142,36 +153,33 @@
 %% SUPPORT REQUEST
 %\newpage
 
+
 % latex table generated in R 3.3.3 by xtable 1.8-2 package
-% Mon Nov 13 17:55:20 2017
+% Tue Nov 14 11:49:44 2017
 \begin{table}[ht]
 \centering
-\begin{tabular}{llr}
+\begin{tabular}{r|L{4cm}|L{4cm}|L{4cm}|L{4cm}}
   \toprule
-Name & Surname & email \\ 
+ & 1 & 2 & 3 & 4 \\ 
   \midrule
-Alisa & Alekseenko & alisa.alekseenko@scilifelab.se \\ 
-   \rowcolor[gray]{0.95}Berrit & Kiehl & berrit.kiehl@ebc.uu.se \\ 
-  Chayan Kumar & Saha & chayan.kumar@umu.se \\ 
-   \rowcolor[gray]{0.95}Fazeelat & Karamat & fazeelat.karamat@umu.se \\ 
-  Giulia & Gaudenzi & giulia.gaudenzi@ki.se \\ 
-   \rowcolor[gray]{0.95}Hongya & Han & ya.han@ki.se \\ 
-  Huthayfa & Mujahed & huthayfa.mujahed@ki.se \\ 
-   \rowcolor[gray]{0.95}Jonas & Sondergaard & jonas.sondergaard@ki.se \\ 
-  Keyi & Geng & keyi.geng@ki.se \\ 
-   \rowcolor[gray]{0.95}Marco & Cavalli & marco.cavalli@igp.uu.se \\ 
-  Ram Vinay & Pandey & ramvinay.pandey@ki.se \\ 
-   \rowcolor[gray]{0.95}Roshan & Vaid & roshan.vaid@su.se \\ 
-  Sylvain & Mareschal & sylvain.mareschal@ki.se \\ 
-   \rowcolor[gray]{0.95}Tatiana & Kan & tatiana.kan@umu.se \\ 
+Alisa Alekseenko &  &  &  &  \\ 
+   \rowcolor[gray]{0.95}Berrit Kiehl &  &  &  &  \\ 
+  Chayan Kumar Saha &  &  &  &  \\ 
+   \rowcolor[gray]{0.95}Fazeelat Karamat &  &  &  &  \\ 
+  Giulia Gaudenzi &  &  &  &  \\ 
+   \rowcolor[gray]{0.95}Hongya Han &  &  &  &  \\ 
+  Huthayfa Mujahed &  &  &  &  \\ 
+   \rowcolor[gray]{0.95}Jonas Sondergaard &  &  &  &  \\ 
+  Keyi Geng &  &  &  &  \\ 
+   \rowcolor[gray]{0.95}Marco Cavalli &  &  &  &  \\ 
+  Ram Vinay Pandey &  &  &  &  \\ 
+   \rowcolor[gray]{0.95}Roshan Vaid &  &  &  &  \\ 
+  Sylvain Mareschal &  &  &  &  \\ 
+   \rowcolor[gray]{0.95}Tatiana Kan &  &  &  &  \\ 
    \bottomrule
 \end{tabular}
 \end{table}
 
-
-
-
-%\end{landscape}
 
 \end{document}  
 

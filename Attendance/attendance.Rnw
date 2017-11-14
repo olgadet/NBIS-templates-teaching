@@ -1,11 +1,12 @@
 \documentclass[12pt]{article}
 
 \usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
-% \geometry{a4paper,
-%  total={170mm,257mm},
-%  left=20mm,
-%  top=20mm,
-%  bottom=40mm}                   % ... or a4paper or a5paper or ... 
+\geometry{a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ right=20mm,
+ top=20mm,
+ bottom=40mm}                   % ... or a4paper or a5paper or ...
 \geometry{landscape}                % Activate for for rotated page geometry
 \usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
 \usepackage{graphicx}
@@ -15,6 +16,7 @@
 \usepackage{hyperref}
 \usepackage{booktabs}
 \usepackage{colortbl, xcolor}
+\usepackage{array}
 
 
 \setlength{\columnsep}{1cm}
@@ -47,6 +49,16 @@
     tabsize=2
 }
 
+
+
+\newcolumntype{L}[1]{>{\raggedright\let\newline\\
+    \arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{C}[1]{>{\centering\let\newline\\
+    \arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{R}[1]{>{\raggedleft\let\newline\\
+    \arraybackslash\hspace{0pt}}m{#1}}
+\newcolumntype{P}[1]{>{\raggedright\tabularxbackslash}p{#1}}
+
 %\usepackage{pdflscape}
  \usepackage{rotating}
   
@@ -72,7 +84,7 @@
 \renewcommand{\headrulewidth}{0pt} % remove rule below header
 
 %% DEFINE TOOLS AND VARIABLES
-\newcommand{\courseName}{ChIP-seq data analysis, 1hp}
+\newcommand{\courseName}{ChIP-seq data analysis, 1 hp}
 \newcommand{\courseLocation}{Stockholm}
 \newcommand{\courseDate}{2017-11-23, 2017-11-24}
 \newcommand{\courseLeaderA}{Olga Dethlefsen}
@@ -83,7 +95,6 @@
 
 %% BEGIN DOCUMENT
 \begin{document}
-%\begin{landscape}
 
 <<include=FALSE, echo=F>>=
 library(knitr)
@@ -99,39 +110,33 @@ concordance=TRUE
 rm(list=ls())
 library(xtable)
 @
+
 <<attandanceList, echo=F, results='asis'>>=
 file.csv <- "/Users/olga/Documents/NBIS/Teaching/201710_ChIP-seq/Admin/NBIS course application_20171106.csv"
+no.slots <- 4
+
 data.csv <- read.csv(file.csv)
 idx.final <- which(data.csv$Final==1)
 data.final <- data.csv[idx.final,]
 
 data.list <- data.frame(Name=data.final$First.Name, Surname=data.final$Last.Name,  email=data.final$Official.e.mail.address)
-
-# Sort 
 o <- order(data.list$Name)
 data.list <- data.list[o,]
 
+
 students <- paste(data.list$Name, data.list$Surname, sep=' ')
-#empty <- rep()
+data.attendance <- matrix(data=NA, nrow=length(students), ncol=no.slots)
+rownames(data.attendance) <- students
 
-data.attendance <- data.frame(Name=students, s1=NULL, s2=NULL, s3=NULL, s4=NULL)
-
-# 
 rws <- seq(1, (nrow(data.list)), by = 2)
 col <- rep("\\rowcolor[gray]{0.95}", length(rws))
-
-print(xtable(data.list, align=c("c", "l", "l", "r")), 
+print(xtable(data.attendance, align=c("r", rep("|L{4cm}", ncol(data.attendance)))), 
   booktabs = TRUE,
   add.to.row = list(pos = as.list(rws), command = col),
-  include.rownames=FALSE
+  include.rownames=TRUE
   )
 
-
 @
-
-
-
-%\end{landscape}
 
 \end{document}  
 
