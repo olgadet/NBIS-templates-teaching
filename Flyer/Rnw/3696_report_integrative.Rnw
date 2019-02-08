@@ -1,0 +1,2313 @@
+\documentclass[12pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ bottom=40mm}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{dirtree}
+\usepackage{subcaption}
+\usepackage{multicol}
+\setlength{\columnsep}{1cm}
+\usepackage[backend=bibtex, sorting=none, style=chicago-authordate]{biblatex}
+\setlength\bibitemsep{\baselineskip}
+%\usepackage[none]{hyphenat}
+\usepackage[british]{babel}
+\usepackage[export]{adjustbox}
+\addbibresource{References.bib}
+
+\usepackage{booktabs}
+\usepackage{colortbl, xcolor}
+
+\hypersetup{%
+  colorlinks=true,% hyperlinks will be coloured
+  linkcolor=blue,% hyperlink text will be green
+}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+%\graphicspath{ {/Users/olga/Documents/BILS/!PROJECTS/2616_zebrafish_mut/Documentation/Images/} }
+
+%% LOGOS
+\usepackage{fancyhdr}
+\addtolength{\headheight}{2cm} % make more space for the header
+\pagestyle{fancyplain} % use fancy for all pages except chapter start
+\lhead{\includegraphics[height=1.3cm, width=2cm]{Logos/NBIS-logo.png}} % left logo
+\rhead{\includegraphics[height=1.3cm, width=4cm]{Logos/SciLifeLab-logo.jpg}} % right logo
+\renewcommand{\headrulewidth}{0pt} % remove rule below header
+
+%% DEFINE TOOLS AND VARIABLES
+\newcommand{\staff}{Olga Dethlefsen}
+\newcommand{\staffWeb}{https://nbis.se/about/staff/olga-dethlefsen/}
+\newcommand{\affilations}{National Bioinformatics Infrastructure Sweden, Science for Life Laboratory, Stockholm University}
+\newcommand{\supportWeb}{http://nbis.se/support/support.html}
+\newcommand{\uppmaxWeb}{http://uppmax.uu.se/support-sv/faq/general-miscellaneous-faq/acknowledging-uppmax--snic--and-uppnex}
+\newcommand{\noIssue}{\#3696}
+\newcommand{\noUppmax}{/b2017080}
+\newcommand{\refGenome}{\texttt{GRCh38}}
+
+\newcommand{\fastqc}{\texttt{FastQC/0.11.5}}
+\newcommand{\trimmomatic}{\texttt{trimmomatic/0.36}}
+\renewcommand{\bowtie}{\texttt{bowtie/1.1.2}}
+\newcommand{\deepTools}{\texttt{deepTools/1.1.2}}
+\newcommand{\MACS}{\texttt{MACS/2.1.0}}
+\newcommand{\picard}{\texttt{picard/2.0.1}}
+\newcommand{\samtools}{\texttt{samtools/1.4}}
+\newcommand{\NGSUtils}{\texttt{NGSUtils/0.5.9}}
+\newcommand{\BEDOPS}{\texttt{BEDOPS/2.4.28}}
+\newcommand{\phantompeakqualtools}{\texttt{phantompeakqualtools/1.1}}
+\newcommand{\blackListed}{\texttt{https://www.encodeproject.org/annotations/ENCSR636HFF/}}
+\newcommand{\sratools}{\texttt{sratools/2.8.0}}
+\newcommand{\bedtools}{\texttt{BEDTools/2.26.0}}
+\newcommand{\Fseq}{\texttt{F-seq/1.85}}
+\newcommand{\MultiQC}{\texttt{MultiQC/1.0}}
+\newcommand{\DiffBind}{\texttt{DiffBind\_2.2.12}}
+\newcommand{\ChIPpeakAnno}{\texttt{ChIPpeakAnno\_3.8.9}}
+
+%% BEGIN DOCUMENT
+\begin{document}
+
+%% TITLE PAGE
+\title{The role of CTCF binding in acute myeloid leukemia: integrative data analysis}
+\author{}
+\maketitle
+\thispagestyle{fancy}
+
+\vspace{2cm}
+\begin{center}
+\begin{tabular}{l r}
+Issue number: & {\noIssue} \\
+Request by: &  Huthayfa Mujahed\textless huthayf.mujahed@ki.se\textgreater\\ 
+Principal Investigator: &  S\"oren Lehmann\\
+Organisation: & Karolinska Institutet \\
+NBIS staff: & \staff
+\end{tabular}
+\end{center}
+
+%% TABLE OF CONTENTS
+\newpage
+\tableofcontents
+
+
+<<knitr, echo=FALSE>>=
+knitr::opts_chunk$set(echo = TRUE,
+size="scriptsize", 
+warning = FALSE, 
+message = FALSE,
+error = TRUE, 
+fig.path = "3696-report-integrative-figures/",
+cache=TRUE, 
+cache.path = "../../scratch/cache/3696-report-integrative/"
+)
+@
+
+%% SUPPORT REQUEST
+\newpage
+\small
+\section{Support request}
+\label{session:support}
+\footnotesize
+\scriptsize
+The CCCTC-binding factor (CTCF) was classically identified as architectural protein that functions as an insulator. Recent research shows that CTCF has multi-diverse functions which vary from gene repression to chromatin organization. Some interactions can facilitate enhancer recruitment which initiates gene expression. Also, it was recently shown that CTCF binding was directing almost all looping and other intra chromosomal interactions in normal hematopoetic cells , likely regulating major gene expression patterns. We believe the aberrant methylation of DNA and potentially other aberrant epigenetic factors in AML patients will influence the interaction of CTCF with chromatin and as a consequence it will affect chromatin organization and gene expression. AML patients with TET2 mutations present with an aberrant DNA methylation pattern that potentially can change CTCF binding. Importantly, everything that changes CTCF binding may have profound effects on gene expression and consequently on leukemogenesis. 
+
+Our aims are 
+\begin{enumerate}
+  \item To examine how CTCF binding patterns changes in AML compared to normal hematopoetic cells
+  \item To investigate the specific CTCF binding pattern in AML with in respect to different geneic mutations
+  \item To define the relation between DNA methylation and CTCF binding in normal and leukemic cells
+  \item To investigate if aberrant DNA methylation interrupts CTCF binding in AML
+  \item To investigate how an aberrant CTCF binding pattern effects intrachromosomal looping and gene expression patterns
+\end{enumerate} 
+ 
+ChIP-Seq libraries were prepared from chromatin extract of CTCF pulldown experiment, and already sequenced. A cohort of 15 patients with normal karyotype and different point mutations were selected. From healthy donors are the controls for this project, as normal controls, we used bone marrow CD34+ cells from 6 healthy age matched donors. The basic data analysis is been done on uppmax server using homer software. We are in need of a ChIP-Seq bioinformatics expert that can help with downstream analysis and integration of the data.
+
+%% WORK LOG SECTION
+\footnotesize
+\section{Work log}
+A brief project history containing key points
+\begin{description}
+\item[2018-01-17] Meeting with Soren, Huthayfa and Sylvain to discuss data integration. Main questions to answer
+\begin{enumerate}
+  \item What is the role of DNA methylation in modulation transcription factor binding sites?
+  \item Can we understand/characterize gene regulatory by further including gene expression data?
+\end{enumerate}
+Suggested data analysis ideas:
+\begin{enumerate}
+  \item Correlation between methylation and binding sites profiles (within patient and further including also group effect AML vs. NBM)
+  \item Comparison of differentially methylated sites and differentially binding sites?
+  \item Comparison of differentially methylated sites, differentially binding sites and differentially expressed genes (e.g. 3 way Venn diagrams)
+  \item Unsupervised hypotheses free data analysis (e.g. can we find a subset of features (methylation sites, binding sites, genes) predictive of AML (i.e. different to NBM))
+\end{enumerate}
+\item[2018-05-29] Meeting with the group. To do: 
+\begin{enumerate}
+  \item run motifs 
+  \item continue with methylation and ChIP-seq data integration as in Wang paper. In principle: get methylation signal in peaks regions, correlation and correlation stratified by genomic locations, consider AML without mutations to get more homogeneous group, add mutations effects where possible. 
+  \item summary statistics within one sample, using whole array (think how). Methylation low (0 - 0.2), medium range (0.2 - 0.6), high range (0.6 - 1.0) vs. occupancy (Huthayfa's idea)
+  \item meta data for IGV, and maybe additional tracks (i.e. all methylation probes)
+  \item Andreas had some idea (to follow via email)
+\end{enumerate}  
+\item[2018-06-26] meeting with the group. Discussed the results and overview of the project (Whiteboard-photo-20180626).
+Break for the summer to collect remaining data (methylation)
+\item[2018-08-14] meeting with the group. Discussed the status of the collected data. Few more libraries to come-in soon. Discussed overview of the project (Whiteboard-photo-20180814), work tasks, library codes and Bianca access. In particular, 
+\begin{enumerate}
+  \item ChIP-seq CTCF characterization (HM)
+  \item Methylation description (HM)
+  \item Methylation WGBS libararies (find out where they are etc.) (HM \& OD)
+  \item Differential binding (HM)
+  \item Differential methylation (OD)
+  \item Data integration: ChIP-seq, Methylation and RNA-seq (OD)
+  \item Aza part (HM)
+  \end{enumerate}
+Other comments / ideas
+\begin{enumerate}
+  \item how to define enhancers regions (AL to check and send out files)
+  \item how to best use 4 WGBS libraries (2 TET2 and 2 non-TET2 mutations, within libraries correlation, Soren has a potential paper in mind)
+  \item Aitken et al. paper found by HM
+\end{enumerate}
+
+\end{description}
+
+\section{Important practical information}
+\subsection{Data responsibility}
+\label{DataRes}
+\begin{description}
+\item [NBIS \& Uppnex] Unfortunately, we do not have resources to keep any files associated with the support request. We kindly suggest that you store safely the results delivered by us. In addition, we kindly ask that you remove the files from UPPMAX/UPPNEX. The main storage at UPPNEX is optimized for high-speed and parallel access, which makes it expensive and not the right place for longer time archiving. Please consider others by not taking up the expensive space.
+\item[Long-term backup] The responsibility for data archiving lies with universities and we recommend asking your local IT for support with long-term data archiving. Also a newly established \href{https://www.scilifelab.se/data/}{Data Office} at SciLifeLab may be of help to discuss other options. 
+\end{description}
+
+\subsection{Acknowledgments}
+\label{acknowledgments}
+If you are presenting the results in a paper, at a workshop or conference, we kindly remind you to acknowledge us according to the signed \href{http://nbis.se/assets/doc/nbis-support-useragreement.pdf}{USER AGREEMENT NBIS support}. Especially,
+\begin{description}
+\item[NBIS staff] should be included as a co-author if the support work leads to a publication and when this is merited in accordance to the ethical recommendations for authorship, e.g. {\href{http://www.icmje.org/recommendations/}{ICMJE recommendations}}. If applicable, please include {\href{\staffWeb}{{\staff}, \affilations}} as co-author.
+\item [NBIS] If the above is not applicable, please acknowledge NBIS according to this example "Support by NBIS (National Bioinformatics Infrastructure Sweden) is gratefully acknowledged"
+\item[Uppmax] In addition, Uppmax kindly asks you to acknowledge UPPMAX and SNIC. If applicable, please add: {\href{\uppmaxWeb}{The computations were performed on resources provided by SNIC through Uppsala Multidisciplinary Center for Advanced Computational Science (UPPMAX) under Project {\noUppmax}.}}
+% \item[NGI] In any and all publications based on data from NGI Sweden, the authors must acknowledge SciLifeLab, NGI and Uppmax, like so: \href{https://ngisweden.scilifelab.se/info/faq#how-do-i-acknowledge-ngi-in-my-publication}{The authors would like to acknowledge support from Science for Life Laboratory, the National Genomics Infrastructure, NGI, and Uppmax for providing assistance in massive parallel sequencing and computational infrastructure.}
+\end{description}
+
+%% MATERIALS AND METHODS SECTION
+\footnotesize
+%\normalsize
+\section{Materials and Methods}
+\subsection{Available data}
+Multiple omics dataset were collected for the AML patients and healthy control
+\begin{description}
+  \item[Methylation]: The Infinium MethylationEPIC BeadChip profiles
+  \item[ChIP-seq]: ChIP-seq libraries with corresponding inputs sequenced on HiSeq 2500 with 1 x 50bp setup using HiSeq Rapid SBS Kit v2 chemistry
+  \item[RNA-seq]: \textit{to be included}
+\end{description}
+
+<<data-avail, echo=F, results='asis', cache=F>>=
+ 
+ library(xtable)
+ inp.meta <- "../../DATA/Meta/metaData_20180814.txt"
+ m.meta <- read.delim(inp.meta)
+ 
+ m.meta$ChIPseq <- as.factor(m.meta$ChIPseq)
+ m.meta$Drug <- as.factor(m.meta$Drug)
+ 
+print(xtable(m.meta, caption = "Available data for integrative analyses", align = c("l", "l", "c", "c", "c", "c", "c", "c", "c"), label="tab:metadata"), caption.placement = "bottom",
+   size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+print(xtable(summary(m.meta[m.meta$Drug==0,])), caption="Summary of the data (without the drug libraries)", caption.placement = "bottom",
+   size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+#summary(m.meta[m.meta$Drug==1,])
+
+@
+
+\subsection{Data processing}
+\begin{description}
+  \item[Methylation]: Illumina MethylationEPIC data were processed with \texttt{ChAMP} package [\cite{Tian2017}]. Probes with a detection p-value above 0.01 in one more samples, probes with a beadcount < 3,  non-CG probes, probes with SNPs [\cite{Zhou2017}], probes aligning to multiple locations [\cite{Nordlund2013}] and probes on the X and Y chromosomes were removed from the analysis. Data were normalized using BMIQ [\cite{Teschendorff2013}] to reduce the technical variation and bias of type 2 probes values and to eliminate type 1 enrichment bias caused by the lower dynamic range of type 2 probes. \texttt{limma} package within \texttt{ChAMP} was used to calculate differential methylation probes between phenotypes of interest. 
+  \item[ChIP-seq]: raw sequence quality was assessed with {\fastqc} [\cite{Andrews2010}]. {\trimmomatic} [\cite{Breese2013}] was used to cut TrueSeq3-SE adapters and Illumina-specific sequences from the reads, to remove poor quality reads [LEADING:20, TRAILING:20, SLIDINGWINDOW:4:18] as well short reads (MINLEN:36). Reads were aligned against reference {\refGenome} genome with {\bowtie} [\cite{Langmead2011}] suppressing all multiple alignments [-n 2 --best -m 1 -q -S -p 3 -e 80 -t --chunkmbs 512]. Strand cross-correlation was calculated with {\phantompeakqualtools}. Duplicated reaads were marked with  {\picard} [\cite{BroadInstitute}] and reads overlapping with the blacklisted genomic regions with artificially high signals were removed with {\NGSUtils} [\cite{Breese2013}]. {\deepTools} [\cite{Ramirez2014}] was also run to prepare ChIP-seq cumulative enrichment plots and to assess overall similarity between libraries using Pearson and Spearman correlation based heatmaps and Principal Component Analysis (5000 bp). Peaks were called with {\MACS} [\cite{Badala2008}]. Differential binding {\DiffBind} R Bioconductor package was used to run differential binding analysis. In particular, peaks identified with {\MACS} were processed to identify sites present in at least two peaksets. Sequencing reads overlapping peaks intervals were counted and used for statistically differentially bound sites based on evidence of binding affinity (measured by differences in read densities) and via DESeq2 statistical methods. {\ChIPpeakAnno} was used for down-stream analysis of peaks, i.e. annotations, visualizations binding site distribution relative to features and obtaining enriched pathways. 
+  \item[RNA-seq] \textit{to be included}
+\end{description}
+
+\subsection{Data visualization}
+A series of tracks were prepared for joint visualization and exploration of the data in IGV or similar genome browser. A batch script to load the data into IGV was also prepared. 
+\begin{description}
+  \item[For ChIP-seq]:
+  \begin{itemize}
+  \item coverage tracks for all the libraries [.bigwig]
+  \item regions of all the significantly detected and consistent peaks [.bed]
+  \item regions that are differentially bound between AML and NBM [.bed]
+  \end{itemize}
+  
+  \item [For EPIC]:
+  \begin{itemize}
+  \item normalized beta values for all the samples [.gct]
+  \item annotated regions of differentially methylation probes between AML and NBM [.bed]
+\end{itemize}
+\end{description}
+
+
+\subsection{Epic array and ChIP-seq consensus datasets}
+<<bindingSites, echo=F>>=
+  
+  file.affinity <- "../../Results/3696-report-chipseq/affinity.txt"
+  no.bindingSites <- length(count.fields(file.affinity))-1
+  
+@
+
+For each binding site in the consensus peaksets (n=\Sexpr{format(no.bindingSites, big.mark = " ")}) derived from ChIP-seq libraries overlapping methylation sites were identified and beta values stored. In case of multiple methylation sites overlapping with the binding sites, average, standard deviation and number of methylations sites were kept. Binding sites with no overlapping methylation sites were excluded, resulting in two corresponding same size matrices of affinity and methlylation values for the consensus ChIP-seq and EPIC array date sets. 
+
+\subsection{CTCF occupancy patterns}
+For each binding site in the consensus peaksets (n=\Sexpr{format(no.bindingSites, big.mark = " ")}) binding sites were marked as constitutive or variable given the affinity values. Constitutive sites were present across all libraries (or across libraries within corresponding groupings) given 25th percentile threshold. 
+
+\subsection{Overall methylation status}
+Unmethylated sites in the consensus EPIC dataset were defined as having maximum beta values across libraries (all or within corresponding groupings) below 0.20. 
+
+\subsection{Per library methylation status}
+For each library given consensus binding regions number of low $\beta <= 0.2$, medium: $\ 0.2 < \beta <= 0.6$ and high: $\beta > 0.6$ methylated sites were reported. These were also reported in the context of affinity values, sites present given 25th percentile threshold. 
+
+\subsection{Methylation and occupancy association}
+For the sites in the consensus EPIC and ChIP-seq datasets linear regression was used to measure whether methylation status is associated with occupancy, with and without including conditions as a predictor variable. R package \texttt{qvalue} was used to estimate an FDR for the multiple testing. Binding regions were annotated with genomic location using \texttt{ChIPseeker} package and the regression results were additionally reported given the genomic locations. 
+%
+% \section{Results I}
+% \subsection{Data Visualization}
+% \begin{figure}[H]
+% \begin{center}
+% \includegraphics[width=\textwidth]{3696-report-integrative-figures/IGV-EPIC-ChIP-seq-example.png}
+% \caption{Example of IGV view of EPIC and ChIP-seq tracks}
+% \label{fig:IGV-ex-01}
+% \end{center}
+% \end{figure}
+%
+% \subsection{Overview of consensus EPIC array and ChIP-seq dataset}
+% % Setting up R-env
+% <<set-R, echo=F>>=
+%   rm(list=ls())
+%   library(DiffBind)
+%   library(ChIPpeakAnno)
+%   library(org.Hs.eg.db)
+%   library(reactome.db)
+%   library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+%   #library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+%   library(VennDiagram)
+%   library(xtable)
+%   library(RColorBrewer)
+%   library(gplots)
+%   library(ggplot2)
+%   library(heatmap3)
+%
+%   library(qvalue)
+%   require(gridExtra)
+%
+%   func.color <- function(inp.group)
+%     {
+%       if (length(unique((inp.group)))>2) {colors.fav <- cols <- brewer.pal(length(unique(inp.group)), "Set1")
+%       }else  {colors.fav <- cols <- brewer.pal(3, "Set1")}
+%
+%       group.unique <- unique(inp.group)
+%       out.color <- inp.group
+%       for (i in 1:length(unique(group.unique))){out.color[inp.group==group.unique[i]]=colors.fav[i]}
+%       out.color
+%     }
+% @
+%
+% <<consensus-affinity-beta-input, echo=F>>=
+%
+%   inp.meta <- "../../DATA/Meta/metaData-20180426-integrative.txt"
+%   m.meta <- read.delim(inp.meta)
+%
+%   file.affinity <- "../../Results/3696-report-chipseq/affinity.txt"
+%   file.betaAffinity <- "../../DATA/processed/RData/EpicArray-beta-norm-per-binding-regions.txt"
+%   file.betaAffinitySD <-"../../DATA/processed/RData/EpicArray-beta-norm-per-binding-regions-sd.txt"
+%   file.betaAffinityNo <- "../../DATA/processed/RData/EpicArray-beta-norm-per-binding-regions-no.txt"
+%
+%   data.affinity <- read.delim(file.affinity)
+%   data.betaAffinity <- read.delim(file.betaAffinity)
+%   data.betaAffinitySD <- read.delim(file.betaAffinitySD)
+%   data.betaAffinityNo <- read.delim(file.betaAffinityNo)
+%
+%
+% @
+%
+% <<consensus-affinity-beta-datasets, echo=F, results='asis'>>=
+%
+%   # Match samples
+%   samples.affinity <- gsub("NBM", "NBM0", colnames(data.affinity[, -c(1:3)]))
+%   colnames(data.affinity)[4:ncol(data.affinity)] <- samples.affinity
+%   samples.betaAffinity <- colnames(data.betaAffinity[, -c(1:3)])
+%   samples.common <- unique(intersect(samples.affinity, samples.betaAffinity))
+%
+%   data.affinityConsensus <- data.affinity[, match(samples.common, colnames(data.affinity))]
+%   data.betaAffinityConsensus <- data.betaAffinity[, match(samples.common, colnames(data.betaAffinity))]
+%   data.betaAffinitySDConsensus <- data.betaAffinitySD[, match(samples.common, colnames(data.betaAffinitySD))]
+%   data.betaAffinityNoConsensus <- data.betaAffinityNo[, match(samples.common, colnames(data.betaAffinityNo))]
+%
+%   idx.match <- match(samples.common, m.meta$ID)
+%   v.factor <- as.character(m.meta$Factor[idx.match])
+%   v.condition <- gsub("AML_noMut", "AML", m.meta$Condition[idx.match])
+%   v.samples <- as.character(m.meta$ID[idx.match])
+%   v.samples_groups <- paste(m.meta$ID[idx.match], m.meta$Condition[idx.match], sep="@")
+%
+%   # Match rows (i.e. leaving binding sites overlapping with >=1 methylation probes)
+%   no.probes <- data.betaAffinityNoConsensus[,1]
+%   no.probes[is.na(no.probes)] <- 0
+%   idx.rowConsensus <- which(no.probes!=0)
+%
+%   data.affinityConsensus <- data.affinityConsensus[idx.rowConsensus, ]
+%   data.betaAffinityConsensus <- data.betaAffinityConsensus[idx.rowConsensus,]
+%   data.betaAffinitySDConsensus <- data.betaAffinitySDConsensus[idx.rowConsensus,]
+%   data.betaAffinityNoConsensus <- data.betaAffinityNoConsensus[idx.rowConsensus,]
+%
+%
+%   # Print table summary of libraries
+%   print(xtable(summary(m.meta[idx.match, -c(5:7)]), caption = "Summary the consensus Epic Array and ChIP-seq libraries", align = c("r", "r", "r", "r", "r"), label="tab:beta-affinity"),
+%       caption.placement = "bottom",
+%       size="footnotesize",
+%       include.rownames=TRUE,
+%       floating=TRUE,
+%       table.placement="H", type = "latex",
+%       format.args=list(big.mark = " "))
+%
+%
+%   # Print table distribution of probes per binding regions
+%   probs.perSites <- data.frame(probes=summary(as.factor(no.probes)), probesP=round((summary(as.factor(no.probes)))*100/length(no.probes),4))
+%   probs.perSites <- data.frame(probesPerSite=rownames(probs.perSites), probs.perSites)
+%   colnames(probs.perSites) <- c("probes per site", "no", "%")
+%
+%   print(xtable(probs.perSites, caption = "Distribution of EPIC array probes per binding sites", align = c("r", "r", "r", "r"), label="tab:beta-affinity-probesDistr"),
+%       caption.placement = "bottom",
+%       size="footnotesize",
+%       include.rownames=FALSE,
+%       floating=TRUE,
+%       table.placement="H", type = "latex",
+%       format.args=list(big.mark = " "))
+%
+%   #idx.colConsensus <- idx.match
+%   rm(idx.match)
+%
+%
+% @
+%
+% Excluding binding sites without overlapping methylation sites resulted in matching consensus affinity and methylation datasets with n=\Sexpr{ncol(data.affinityConsensus)} samples and m=\Sexpr{format(nrow(data.affinityConsensus), big.mark=" ")} features (binding sites with overlapping methylation sites)
+%
+% <<consensus-affinity-beta-correlations, echo=F>>=
+%
+%  cor.affinity <- matrix(data=NA, nrow=ncol(data.affinityConsensus), ncol=ncol(data.affinityConsensus))
+%  cor.betaAffinity <- matrix(data=NA, nrow=ncol(data.affinityConsensus), ncol=ncol(data.affinityConsensus))
+%
+%  for (i in 1:ncol(data.affinityConsensus))
+%  {
+%    for (j in 1:ncol(data.affinityConsensus))
+%    {
+%       cor.affinity[i,j] <- cor(data.affinityConsensus[,i], data.affinityConsensus[,j])
+%       cor.betaAffinity[i,j] <- cor(data.betaAffinityConsensus[,i], data.betaAffinityConsensus[,j], use="complete.obs")
+%    }
+%  }
+%
+%  colnames(cor.affinity) <- rownames(cor.affinity) <- v.samples
+%  colnames(cor.betaAffinity) <- rownames(cor.betaAffinity) <- v.samples
+%
+% @
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<fig-consensus-affinity-heatmap, echo=F, fig.width=5, fig.height=5>>=
+%
+%  color.condtion <- func.color(v.condition)
+%  color.factor <- func.color(v.factor)
+%
+%  ColSideAnn <- data.frame(Gp=v.condition)
+%  ColSideColors <- cbind(Factor=color.factor, Cond=color.condtion)
+%
+%  heatmap3(cor.affinity, RowSideColors=ColSideColors, ColSideAnn = ColSideAnn, ColSideFun=function(x) showAnn(x), scale="none", symm=TRUE, ColSideWidth=1, showColDendro=F, margins = c(5,5))
+%
+%   # heatmap3(cor.betaAffinity, RowSideColors=ColSideColors, ColSideAnn = ColSideAnn, ColSideFun=function(x) showAnn(x), scale="none", symm=TRUE, ColSideWidth=1, showColDendro=F, margins = c(5,5))
+%
+% @
+% \label{fig:consensus-affinity-heatmap}
+% \end{center}
+% \caption{Correlation heatmap using consensus affinity data}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<fig-consensus-affinityBeta-heatmap, echo=F, fig.width=5, fig.height=5>>=
+%
+%   heatmap3(cor.betaAffinity, RowSideColors=ColSideColors, ColSideAnn = ColSideAnn, ColSideFun=function(x) showAnn(x), scale="none", symm=TRUE, ColSideWidth=1, showColDendro=F, margins = c(5,5))
+%
+% @
+% \label{fig:consensus-affinityBeta-heatmap}
+% \end{center}
+% \caption{Correlation heatmap using consensus methylation data}
+% \end{figure}
+%
+% <<save-tmp-RData, echo=F>>=
+%   save.image("../../scratch/tmp-consensus.RData.RDATA")
+% @
+%
+% \subsection{CTCF occupancy patterns}
+% <<CTCF-patterns-data, echo=F>>=
+%  rm(list=ls())
+%  load("../../scratch/tmp-consensus.RData.RDATA")
+%
+% @
+%
+% <<CTCF-patterns, echo=F>>=
+%
+%   # For all available ChIP-seq data: number of peaks detected by each sample
+%   data.binding <- as.matrix(data.affinity[-c(1:3)])
+%   data.binding <- data.binding[, match(samples.common, colnames(data.binding))]
+%
+%   # NBM (3)
+%   # AML (6)
+%   # TET2-NPM1 (3)
+%   # summary(as.factor(v.condition))
+%
+%   # Indicator matrix for peaks present (1) or absent (0)
+%   data.bindingI <- matrix(data=1, nrow=nrow(data.binding), ncol = ncol(data.binding))
+%   data.bindingI[data.binding<=quantile(data.binding)[2]] <- 0
+%   colnames(data.bindingI) <- colnames(data.binding)
+%
+%
+%   # Number of libraries given a site incl. consecutive ones
+%   condition.2test <- c("NBM", "AML", "TET2_NPM1")
+%
+%   list.occupancy <- list()
+%   no.consitutive <- c()
+%   no.variable <- c()
+%
+%   list.occupancy[[1]] <- apply(data.bindingI, 1, sum)
+%   no.consitutive[1] <- length(which(list.occupancy[[1]]==ncol(data.binding)))
+%   no.variable[1] <- nrow(data.affinity)-no.consitutive[1]
+%
+%   for (i in 1:length(condition.2test))
+%   {
+%     idx <- which(v.condition==condition.2test[i])
+%     list.occupancy[[i+1]] <- apply(data.bindingI[, idx], 1, sum)
+%     no.consitutive[i+1] <- length(which(list.occupancy[[i+1]]==length(idx)))
+%     no.variable[i+1] <- nrow(data.binding)-no.consitutive[i+1]
+%
+%   }
+%   names(list.occupancy) <- c("ALL", condition.2test)
+%   names(no.consitutive) <- c("ALL", condition.2test)
+%
+% @
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-CTCF-patterns-constitutive-variable-barplot, echo=F, fig.width=8, fig.height=4>>=
+%   library(reshape2)
+%   cols <- brewer.pal(3, "Set3")
+%
+%   data.consitutive <- data.frame(Gp=names(no.consitutive), Constitutive=no.consitutive, Variable=no.variable)
+%   data.consitutive <- melt(data.consitutive)
+%
+%   g1 <- ggplot(data.consitutive, aes(x=Gp, y=value, fill=variable))+geom_bar(stat="identity", color="black")+ylab("")+xlab("")+scale_fill_brewer(palette="Set3")+theme(legend.title=element_blank())
+%
+%   print(g1)
+%
+%   no.all <- length(v.condition)
+%   no.AML <- length(which(v.condition=="AML"))
+%   no.NBM <- length(which(v.condition=="NBM"))
+%   no.TET2_NPM1 <- length(which(v.condition=="TET2_NPM1"))
+%
+% @
+% \caption{Overview of constitutive and variables CTCF sites (n=\Sexpr{format(nrow(data.affinity), big.mark=" ")}). Note the uneven group sizes: all = \Sexpr{no.all}, AML=\Sexpr{no.AML}, NBM = \Sexpr{no.NBM}, TET2\_NPM1 = \Sexpr{no.TET2_NPM1}.}
+% \label{fig:CTCF-patterns-constitutve-variable-barplot}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-CTCF-patterns-constitutive-variable-histogram, echo=F, fig.width=8, fig.height=6>>=
+%   library(reshape2)
+%   cols <- brewer.pal(3, "Set3")
+%
+%   par(mfrow=c(2,2))
+%
+%   for (i in 1:length(list.occupancy))
+%   {
+%     hist(list.occupancy[[i]], xlab="", main=names(list.occupancy)[i], cex.main=0.8, col=cols[2])
+%   }
+% @
+% \caption{Overview of constitutive and variables CTCF sites (n=\Sexpr{format(nrow(data.affinity), big.mark=" ")}): distribution across libraries}
+% \label{fig:CTCF-patterns-constitutve-variable-hist}
+% \end{center}
+% \end{figure}
+%
+% <<save-tmp-01-RData, echo=F>>=
+%   save.image("../../scratch/tmp-01-consensus.RData.RDATA")
+% @
+%
+% \subsection{Overall methylation status}
+% <<overall-methylation-input, echo=F>>=
+%
+%    rm(list=ls())
+%    load("../../scratch/tmp-01-consensus.RData.RDATA")
+%
+% @
+%
+% <<overall-methylation, echo=F>>=
+%
+%   data.bindingIConsensus <- data.bindingI[idx.rowConsensus, ]
+%
+%   list.overallMethylation <- list()
+%   condition.label <- c("ALL",  condition.2test)
+%
+%   for (i in 1:(length(condition.2test)+1))
+%   {
+%
+%     if (i == 1)
+%     { idx.groups <- 1:ncol(data.affinityConsensus)
+%     }else
+%     { idx.groups <- which(v.condition==condition.2test[i-1])
+%     }
+%
+%       # Number of sites on
+%       m.set <- data.frame(Occupancy = apply(data.bindingIConsensus[, idx.groups], 1, sum))
+%       #m.set$Occupancy <-apply(data.bindingIConsensus[, idx.groups], 1, sum)
+%
+%       # Variable / Constitutive indicator
+%       lab.constitutive <- rep("Variable", nrow(data.bindingIConsensus))
+%       lab.constitutive[which(m.set$Occupancy==length(idx.groups))] <- "Constitutive"
+%       m.set$OccupancyPattern <- lab.constitutive
+%
+%       # Number of EPIC probes
+%       m.set$MethylationSites <- data.betaAffinityNoConsensus[, idx.groups[1]]
+%
+%       # EPIC average, min and max and range
+%       m.set$betaAvg <- apply(data.betaAffinityConsensus[, idx.groups], 1, mean)
+%       m.set$betaMin <- apply(data.betaAffinityConsensus[, idx.groups], 1, min)
+%       m.set$betaMax <- apply(data.betaAffinityConsensus[, idx.groups], 1, max)
+%       v.max <- apply(data.betaAffinityConsensus[, idx.groups], 1, max)
+%       v.min <- apply(data.betaAffinityConsensus[, idx.groups], 1, min)
+%       m.set$betaRange <- v.max-v.min
+%
+%       # EPIC CV
+%       m.set$betaCV <- apply(data.betaAffinityConsensus[, idx.groups], 1, sd)/apply(data.betaAffinityConsensus[, idx.groups], 1, mean)
+%
+%       # GP
+%       m.set <- data.frame(m.set)
+%       m.set$Gp <- condition.label[i]
+%
+%       # Methylated / Unmethylated flag
+%       # unmethylated if max beta value across libraries is less than beta min
+%       beta.min=0.20
+%       lab.methylated <- rep("Methylated", nrow(data.bindingIConsensus))
+%       lab.methylated[m.set$betaMax<=beta.min] <- "Unmethylated"
+%       m.set$MethylationStatus=lab.methylated
+%
+%       m.set$Gp2 <- paste(m.set$MethylationStatus, m.set$OccupancyPattern, sep=".")
+%
+%       # Rownames
+%       rownames(m.set) <- idx.rowConsensus
+%
+%       list.overallMethylation[[i]] <- m.set
+%   }
+%
+%   names(list.overallMethylation) <- c("ALL",  condition.2test)
+%   rm(lab.constitutive, lab.methylated)
+%
+%   m.overallMethylation <- list.overallMethylation[[1]]
+%   for (i in 2:length(list.overallMethylation))
+%   {
+%     m.overallMethylation <- rbind(m.overallMethylation, list.overallMethylation[[i]])
+%   }
+%
+%
+%    g.betaStatus <- ggplot(m.overallMethylation, aes(as.factor(Gp), fill=MethylationStatus)) + xlab("")+geom_bar()+scale_fill_brewer(palette="Set3")+theme(legend.title=element_blank())
+%
+%   g.betaStatus2 <- ggplot(m.overallMethylation, aes(as.factor(Gp), fill=Gp2)) + xlab("")+geom_bar()+scale_fill_brewer(palette="Set3")+theme(legend.title=element_blank())
+%
+%   idx.methylated <- which(m.overallMethylation$MethylationStatus=="Methylated")
+%   m.overallMethylation_methylated <- m.overallMethylation[idx.methylated, ]
+%
+%   g.betaAvg <- ggplot(m.overallMethylation_methylated, aes(as.factor(Gp), betaAvg, fill=Gp))+
+%  xlab("")+geom_boxplot()+scale_color_brewer(palette="Set3")+theme(legend.title=element_blank())
+%
+%   g.betaAvg2 <- ggplot(m.overallMethylation_methylated, aes(as.factor(Gp), betaAvg, fill=OccupancyPattern))+
+%  xlab("")+geom_boxplot()+scale_fill_brewer(palette="Set3")+theme(legend.title=element_blank())
+%
+%
+% @
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-overall-methylation-status, echo=F, fig.width=8, fig.height=4>>=
+% print(g.betaStatus)
+% @
+% \caption{Overview of methylation status in the binding sites regions (n=\Sexpr{format(nrow(data.affinityConsensus), big.mark=" ")}): unmethylated sites defined as sites with maximum beta values across libraries less than \Sexpr{beta.min}}
+% \label{fig:overal-methylation-status}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-overall-methylation-status-variable-constitutive, echo=F, fig.width=8, fig.height=4>>=
+% print(g.betaStatus2)
+% @
+% \caption{Overview of methylation status in the binding sites regions (n=\Sexpr{format(nrow(data.affinityConsensus), big.mark=" ")}): unmethylated sites defined as sites with maximum beta values across libraries less than \Sexpr{beta.min}}
+% \label{fig:overall-methylation-status-variable-constitutive}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-overall-methylation-beta-distribution, echo=F, fig.width=8, fig.height=4>>=
+% print(g.betaAvg)
+% @
+% \caption{Distribution of beta values in the methylated binding sites regions (n=\Sexpr{format(nrow(data.affinityConsensus), big.mark=" ")}): unmethylated sites defined as sites with maximum beta values across libraries less than \Sexpr{beta.min}}
+% \label{fig:overall-methylation-beta-distribution}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-overall-methylation-beta-distribution-variable-constitutive, echo=F, fig.width=8, fig.height=4>>=
+% print(g.betaAvg2)
+% @
+% \caption{Distribution of beta values in the methylated binding sites regions (n=\Sexpr{format(nrow(data.affinityConsensus), big.mark=" ")}): unmethylated sites defined as sites with maximum beta values across libraries less than \Sexpr{beta.min}}
+% \label{fig:overall-methylation-beta-distribution-variable-constitutive}
+% \end{center}
+% \end{figure}
+%
+% <<save-tmp-02-RData, echo=F>>=
+%   save.image("../../scratch/tmp-02-consensus.RData.RDATA")
+% @
+%
+% \subsection{Per library methylation status}
+% <<methylation-per-library-input, echo=F>>=
+%    rm(list=ls())
+%    load("../../scratch/tmp-02-consensus.RData.RDATA")
+% @
+%
+% <<methylation-per-library, echo=F>>=
+%
+%    beta.min=0.2
+%    beta.mid=0.6
+%    beta.high=0.8
+%
+%    # Number of low, medium and high methylated binding sites
+%    m.methylationPerLibrary <- matrix(data=NA, nrow=ncol(data.betaAffinityConsensus), ncol=3)
+%    rownames(m.methylationPerLibrary) <- colnames(data.betaAffinityConsensus)
+%    colnames(m.methylationPerLibrary) <- c("Low", "Medium", "High")
+%
+%    m.methylationPerLibraryA <- m.methylationPerLibrary
+%
+%    for (i in 1:ncol(data.betaAffinityConsensus))
+%    {
+%
+%      # Count low, medium and high methylation in all affinity biding sites per library
+%      idx.low <- which(data.betaAffinityConsensus[,i] <= beta.min)
+%      idx.med <- which(data.betaAffinityConsensus[,i] > beta.min & data.betaAffinityConsensus[,i] <= beta.high)
+%      idx.high <- which(data.betaAffinityConsensus[,i] > beta.high)
+%      m.methylationPerLibrary[i,] <- c(length(idx.low), length(idx.med), length(idx.high))
+%
+%      # Count low, medium and high methylation in > 25th percentile present binding sites per library
+%      idx.affinity <- which(data.bindingIConsensus[,i]==0)
+%      idx.low <- which(data.betaAffinityConsensus[idx.affinity,i] <= beta.min)
+%      idx.med <- which(data.betaAffinityConsensus[idx.affinity,i] > beta.min & data.betaAffinityConsensus[idx.affinity,i] <= beta.high)
+%      idx.high <- which(data.betaAffinityConsensus[idx.affinity,i] > beta.high)
+%      m.methylationPerLibraryA[i,] <- c(length(idx.low), length(idx.med), length(idx.high))
+%
+%    }
+%
+%
+%    library(reshape2)
+%    m.methylationPerLibrary <- data.frame(Lib=rownames(m.methylationPerLibrary), m.methylationPerLibrary)
+%    m.methylationPerLibrary <- melt(m.methylationPerLibrary)
+%
+%    m.methylationPerLibraryA <- data.frame(Lib=rownames(m.methylationPerLibraryA), m.methylationPerLibraryA)
+%    m.methylationPerLibraryA <- melt(m.methylationPerLibraryA)
+%
+%
+%    g.MethPerLibrary <- ggplot(m.methylationPerLibrary, aes(as.factor(Lib), value, fill=variable))+ xlab("")+geom_bar(stat="identity")+scale_fill_brewer(palette="Set3")+theme(legend.title=element_blank())+ylab("count")
+%
+%    g.MethPerLibraryA <- ggplot(m.methylationPerLibraryA, aes(as.factor(Lib), value, fill=variable))+ xlab("")+geom_bar(stat="identity")+scale_fill_brewer(palette="Set3")+theme(legend.title=element_blank())+ylab("count")
+%
+%
+%   # Heatmap top methylated sites
+%   # v.betaAvg <- apply(data.betaAffinityConsensus, 1, mean)
+%   # v.betaCV <- apply(data.betaAffinityConsensus, 1, sd)/apply(data.betaAffinityConsensus, 1, mean)
+%   #
+%   # o.avg <- rank(v.betaAvg, ties.method = "random")
+%   # o.cv <- rank(v.betaCV, ties.method = "random")
+%   # idx.avg <- which(o.avg>(nrow(data.betaAffinityConsensus)-100))
+%   # idx.cv <- which(o.cv>(nrow(data.betaAffinityConsensus)-50))
+%   #
+%   #  data.betaAffinityConsensus_topAvg <- as.matrix(data.betaAffinityConsensus[idx.avg,])
+%   #  data.betaAffinityConsensus_topCV <- data.betaAffinityConsensus[idx.cv,]
+%   #heatmap.2(as.matrix((data.betaAffinityConsensus[1:1000,])), dendrogram="column", trace="none")
+%
+%
+% @
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-methylation-per-library, echo=F, fig.width=14, fig.height=5>>=
+% print(g.MethPerLibrary)
+% @
+% \caption{Methylation status per libraries, low: $\beta <= 0.2$, medium: $\ 0.2 < \beta <= 0.6$; high: $\beta > 0.6$}
+% \label{fig:methylation-status-per-library}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-methylation-per-library-affinity-dependent, echo=F, fig.width=14, fig.height=5>>=
+% print(g.MethPerLibraryA)
+% @
+% \caption{Methylation status given affinity binding sites per library, low: $\beta <= 0.2$, medium: $\ 0.2 < \beta <= 0.6$; high: $\beta > 0.6$}
+% \label{fig:methylation-status-per-library-affinity-dependent}
+% \end{center}
+% \end{figure}
+%
+% <<save-tmp-03-RData, echo=F>>=
+%   save.image("../../scratch/tmp-03-consensus.RDATA")
+% @
+%
+% \subsection{Methylation and occupancy association}
+% <<M-and-O-input, echo=F>>=
+%    rm(list=ls())
+%    load("../../scratch/tmp-03-consensus.RDATA")
+% @
+%
+% <<Meth-and-Occupancy-cor, echo=F, eval=FALSE>>=
+%
+%    #dim(data.affinityConsensus)
+%    #dim(data.betaAffinityConsensus)
+%
+%    # m.affinity <- as.matrix(data.affinityConsensus)
+%    # m.beta <- as.matrix(data.betaAffinityConsensus)
+%    #
+%    # v.betaAffinityCorr <- c()
+%    # for (i in 1:nrow(data.affinityConsensus))
+%    # {
+%    #   v.betaAffinityCorr[i] <- cor(m.beta[i,], m.affinity[i,])
+%    # }
+%    #
+%    #
+%    # idx.na <- which(is.na(v.betaAffinityCorr)==TRUE)
+%    #
+%    # tmp.idx <- which(v.betaAffinityCorr<(-0.8))
+%    # plot(as.numeric(data.betaAffinityConsensus[tmp.idx[4],]), as.numeric(data.affinityConsensus[tmp.idx[4],]))
+%    #
+%
+% @
+%
+% <<Meth-and-Occupancy-regression, echo=F, eval=TRUE>>=
+%
+%     m.affinityConsensus <- as.matrix(data.affinityConsensus)
+%     m.betaConsensus <- as.matrix(data.betaAffinityConsensus)
+%
+%     # Per predictor variable: Coefficient, Std.error, t-statstics, p-value
+%     # Per model: Adj. R squared, F-statstics, overall p-value
+%
+%     int.est <- int.sd <- int.pV <- c()
+%     beta.est <- beta.sd <- beta.pV <- c()
+%     model.pV <- model.R <- c()
+%
+%    for (i in 1:nrow(data.affinityConsensus))
+%    {
+%
+%     # Create tmp data.frame
+%     my.data <- data.frame(beta=m.betaConsensus[i,], affinity=m.affinityConsensus[i,], condition=v.condition, factor=v.factor)
+%
+%     #lm.fit <- lm(affinity~beta + condition), data=my.data)
+%
+%     lm.fit <- lm(affinity~beta, data=my.data)
+%     lm.summary <- summary(lm.fit)
+%     lm.coeff <- coefficients(lm.summary)
+%
+%     #if (nrow(lm.coeff)!=1)
+%     if(sd(my.data$beta)!=0)
+%     {
+%       int.est[i] <- lm.coeff[1,1]
+%       int.sd[i] <- lm.coeff[1,2]
+%       int.pV[i] <- lm.coeff[1,4]
+%       beta.est[i] <- lm.coeff[2,1]
+%       beta.sd[i] <- lm.coeff[2,2]
+%       beta.pV[i] <- lm.coeff[2,4]
+%
+%       model.R[i] <- lm.summary$adj.r.squared
+%
+%       fstat<-lm.summary$fstatistic
+%       model.pV[i] <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+%
+%     }else
+%     {
+%       int.est[i] <- int.sd[i] <- int.pV[i] <- NA
+%       beta.est[i] <- beta.sd[i] <- beta.pV[i] <- NA
+%       model.R[i] <- model.pV[i] <- NA
+%     }
+%
+%    }
+%
+%   reg.mc <- data.frame(int.est, int.sd, int.pV, beta.est, beta.sd, beta.pV, model.R, model.pV)
+%
+% @
+%
+% <<Meth-and-Occupancy-regression-groups, echo=F, eval=TRUE>>=
+%
+%   # Per predictor variable: Coefficient, Std.error, t-statstics, p-value
+%   # Per model: Adj. R squared, F-statstics, overall p-value
+%
+%   int.est <- int.sd <- int.pV <- c()
+%   beta.est <- beta.sd <- beta.pV <- c()
+%
+%   model.pV <- model.R <- c()
+%
+%   m.out <- matrix(data=NA, nrow=nrow(data.affinityConsensus), ncol=24)
+%   for (i in 1:nrow(data.affinityConsensus))
+%    {
+%
+%     # Create tmp data.frame
+%     my.data <- data.frame(beta=m.betaConsensus[i,], affinity=m.affinityConsensus[i,], condition=v.condition, factor=v.factor)
+%
+%     lm.fit <- lm(affinity~beta+condition, data=my.data)
+%     lm.summary <- summary(lm.fit)
+%     lm.coeff <- coefficients(lm.summary)
+%
+%     #if (nrow(lm.coeff)!=1)
+%     if(sd(my.data$beta)!=0)
+%     {
+%
+%       m.out[i, ] <- as.numeric(lm.coeff)
+%       if (i==1){
+%         colnames(m.out) <- paste(rownames(lm.coeff), rep(colnames(lm.coeff), each=nrow(lm.coeff) ))
+%       }
+%
+%       model.R[i] <- lm.summary$adj.r.squared
+%
+%       fstat<-lm.summary$fstatistic
+%       model.pV[i] <- pf(fstat[1], fstat[2], fstat[3], lower.tail=FALSE)
+%
+%     }else
+%     {
+%       model.R[i] <- model.pV[i] <- NA
+%     }
+%
+%    }
+%
+%   reg.mcGp<- data.frame(m.out, model.R, model.pV)
+%
+% @
+%
+% <<Meth-and-Occupancy-regression-qvalue, echo=F, eval=TRUE>>=
+%
+% chr.start <- chr.end <- c()
+% for (i in 1:length(data.affinity$START[idx.rowConsensus])){
+%   chr.start[i] <- format(data.affinity$START[idx.rowConsensus[i]], big.mark = " ")
+%   chr.end[i] <- format(data.affinity$END[idx.rowConsensus[i]], big.mark = " ")
+% }
+%
+% rows.consensus <- paste("Chr", data.affinity$CHR[idx.rowConsensus], ":", data.affinity$START[idx.rowConsensus], "-", data.affinity$END[idx.rowConsensus], sep="")
+% rows.consensus2 <- paste("Chr", data.affinity$CHR[idx.rowConsensus], ": ", chr.start, "-", chr.end, sep="")
+%
+%
+% qobj.mc <- qvalue(p=reg.mc$model.pV)
+% qvalues.mc <- qobj.mc$qvalues
+% #summary(qobj.mc)
+% reg.mc$model.qV <- qvalues.mc
+% rownames(reg.mc) <- rows.consensus
+%
+% qobj.mcGp <- qvalue(p=reg.mcGp$model.pV)
+% qvalues.mcGp <- qobj.mcGp$qvalues
+% #summary(qobj.mcGp)
+% reg.mcGp$model.qV <- qvalues.mcGp
+% rownames(reg.mcGp) <- rows.consensus
+%
+% # Significant results
+% idx.mc <- which(qvalues.mc<0.1)
+% idx.mcGp <- which(qvalues.mcGp<0.1)
+%
+% dir.results <- "../../Results/3696-report-integrative/"
+% fileOut.methOccupancyReg <- "TABLE-methylation-occupancy-regression.txt"
+% fileOut.methOccupancyRegGp <- "TABLE-methylation-occupancy-regression-inclGp.txt"
+% write.table(reg.mc[idx.mc,], paste(dir.results, fileOut.methOccupancyReg, sep=""), sep="\t", quote=F)
+% write.table(reg.mcGp[idx.mcGp,], paste(dir.results, fileOut.methOccupancyRegGp, sep=""), sep="\t", quote=F)
+%
+% @
+%
+% <<Meth-and-Occupancy-regression-plots, echo=F, eval=F>>=
+%
+% fig.reg <- paste(dir.results, "fig-reg", sep="")
+% dir.create(fig.reg, showWarnings = FALSE)
+%
+% fig.regGp <- paste(dir.results, "fig-reg-gp", sep="")
+% dir.create(fig.regGp, showWarnings = FALSE)
+%
+% for (i in 1:length(idx.mc))
+% {
+%
+%   tmp.plot <- paste(fig.reg, "/fig-reg-", i, ".pdf", sep="")
+%
+%   pdf(tmp.plot, width=14)
+%   tmp.data <- data.frame(methylation=m.betaConsensus[idx.mc[i],], occupancy=m.affinityConsensus[idx.mc[i],], condition=v.condition, factor=v.factor)
+%
+%   g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(rows.consensus[idx.mc[i]])
+%   g2 <- ggplot(tmp.data, aes(x=methylation, y=occupancy, color=v.condition))+geom_point()+theme(legend.title=element_blank())+ggtitle(rows.consensus[idx.mc[i]])
+%
+%   #ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)
+%   #print(reg.mc[idx.mc[i],])
+%
+%   grid.arrange(g1, g2, ncol=2)
+%   dev.off()
+%
+% }
+%
+% for (i in 1:length(idx.mcGp))
+% {
+%
+%   tmp.plot <- paste(fig.regGp, "/fig-regGp-", i, ".pdf", sep="")
+%
+%   pdf(tmp.plot, width=14)
+%   tmp.data <- data.frame(methylation=m.betaConsensus[idx.mcGp[i],], occupancy=m.affinityConsensus[idx.mcGp[i],], condition=v.condition, factor=v.factor)
+%
+%   g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(rows.consensus[idx.mcGp[i]])
+%   g2 <- ggplot(tmp.data, aes(x=methylation, y=occupancy, color=v.condition))+geom_point()+theme(legend.title=element_blank())+geom_smooth(method="lm")+ggtitle(rows.consensus[idx.mcGp[i]])
+%   #ggplot(tmp.data, es(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)
+%   #print(reg.mc[idx.mc[i],])
+%
+%   grid.arrange(g1, g2, ncol=2)
+%   dev.off()
+%
+%   print(i)
+% }
+%
+% @
+%
+% <<echo=F, results='asis'>>=
+%
+%   idx.common <- intersect(idx.mc, idx.mcGp)
+%   idx.eg <- idx.common[2]
+%
+%   my.data <- data.frame(beta=m.betaConsensus[idx.eg,], affinity=m.affinityConsensus[idx.eg,], condition=v.condition, factor=v.factor)
+%   lm.fit <- lm(affinity~beta, data=my.data)
+%   lm.summary <- summary(lm.fit)
+%
+%
+%   print(xtable(lm.summary,
+%       caption = paste("Regression model for an example region ", rows.consensus[idx.eg], sep=""), align = c("r", "r", "r", "r", "r"), label="tab:meth-occupany-reg-example-02"),
+%       caption.placement = "bottom",
+%       size="footnotesize",
+%       include.rownames=TRUE,
+%       floating=TRUE,
+%       table.placement="H", type = "latex",
+%       format.args=list(big.mark = " "))
+%
+%       #. Complete results in ", fileOut.methOccupancyReg, sep=""
+%
+%
+%   lm.fit <- lm(affinity~beta+condition, data=my.data)
+%   lm.summary <- summary(lm.fit)
+%
+%   print(xtable(lm.summary,
+%       caption = paste("Regression model incl. condition as a predictor variable for an example region ", rows.consensus[idx.eg], sep=""), align = c("r", "r", "r", "r", "r"), label="tab:meth-occupany-reg-example"),
+%       caption.placement = "bottom",
+%       size="footnotesize",
+%       include.rownames=TRUE,
+%       floating=TRUE,
+%       table.placement="H", type = "latex",
+%       format.args=list(big.mark = " "))
+%
+% #. Complete results in ", fileOut.methOccupancyRegGp,
+%
+% @
+%
+% % Example regression plot
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-Meth-and-Occupancy-regression-example, echo=F, fig.width=14>>=
+%
+%   my.data <- data.frame(methylation=m.betaConsensus[idx.eg,], occupancy=m.affinityConsensus[idx.eg,], condition=v.condition, factor=v.factor)
+%   g1 <- ggplot(my.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)
+%   g2 <- ggplot(my.data, aes(x=methylation, y=occupancy, color=v.condition))+geom_point()+theme(legend.title=element_blank())#+geom_smooth(method='lm')
+%
+%   grid.arrange(g1, g2, ncol=2)
+%
+% @
+% \caption{Scatter plot for the example region \Sexpr{rows.consensus[idx.eg]}. }
+% %\label{fig:CTCF-patterns-pie}
+% \end{center}
+% \end{figure}
+%
+% \normalsize
+% Summary of the significant calls at various cutoffs for regression model: $occupancy \sim methylation$
+% <<>>=
+% summary(qobj.mc)
+% @
+%
+% Summary of the significant calls at various cutoffs for regression model: $occupancy \sim methylation + condition$ (AML, NBM, NMP1, TET2, TET2\_NPM1)
+% <<>>=
+% summary(qobj.mcGp)
+% @
+%
+% <<Fig-Meth-and-Occupancy-regression-tables, echo=F, results='asis'>>=
+%
+%   #reg.mc[idx.mc,]
+%
+%   table.out <- reg.mc[idx.mc,]
+%   rws <- seq(1, (nrow(table.out)), by = 2)
+%   col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+%
+%   print(xtable(reg.mc[idx.mc,],
+%       caption = paste("Significant regression models (q value $<$ 0.1). Complete results saved also in ", fileOut.methOccupancyReg, sep=""), align = c("r", "r", "r", "r", "r", "r", "r", "r", "r", "r"), display=c("s", "f", "f", "E", "f", "f", "E", "f", "E", "E"), label="tab:meth-occupancy-regression"),
+%       caption.placement = "bottom",
+%       size="scriptsize",
+%       include.rownames=TRUE,
+%       floating=TRUE,
+%       table.placement="H", type = "latex",
+%       format.args=list(big.mark = " "),
+%       booktabs = TRUE,
+%       add.to.row = list(pos = as.list(rws), command = col))
+%
+%
+%   idx.out <- c(grep("condition", colnames(reg.mcGp)), grep("t.value", colnames(reg.mcGp)))
+%
+%   table.out <- reg.mcGp[idx.mcGp, -idx.out]
+%   colnames(table.out) <- c("int.est", "beta.est", "int.sd", "beta.sd", "int.pV", "beta.pV", "model.R", "model.pV", "model.qV")
+%
+%
+%   rws <- seq(1, (nrow(table.out)-1), by = 2)
+%   col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+%   print(xtable(table.out,
+%       caption = paste("Significant regression models incl. condition as predictior variable(q value $<$ 0.1). Complete results saved in ", fileOut.methOccupancyRegGp, sep=""), align = c("r", "r", "r", "r", "r", "r", "r", "r", "r", "r"), display=c("s", "f", "f", "E", "f", "f", "E", "f", "E", "E"), label="tab:meth-occupancy-regression-inclGp"),
+%       caption.placement = "bottom",
+%       size="scriptsize",
+%       include.rownames=TRUE,
+%       floating=TRUE,
+%       table.placement="H", type = "latex",
+%       format.args=list(big.mark = " "),
+%       booktabs = TRUE,
+%       add.to.row = list(pos = as.list(rws), command = col))
+%
+%   # Number of negative (-beta, expected) and positive (+beta) associations
+%   reg.beta <- c(length(which(reg.mc$beta.est[idx.mc]<0)), length(which(reg.mc$beta.est[idx.mc]>0)))
+%   reg.betaGp <- c(length(which(reg.mcGp$beta.Estimate[idx.mcGp]<0)), length(which(reg.mcGp$beta.Estimate[idx.mcGp]>0)))
+%   table.out <- rbind(reg.beta, reg.betaGp)
+%
+%   rws <- seq(1, (nrow(table.out)-1), by = 2)
+%   col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+%   colnames(table.out) <- c("beta negative", "beta positive")
+%   rownames(table.out) <- c("reg", "reg. incl. conditions")
+%     print(xtable(table.out,
+%       caption = "Number of negative and positive associations for regression models", align = c("r", "r", "r"), label="tab:meth-occupancy-regression-beta-negative-positive"),
+%       caption.placement = "bottom",
+%       size="scriptsize",
+%       include.rownames=TRUE,
+%       floating=TRUE,
+%       table.placement="H", type = "latex",
+%       format.args=list(big.mark = " "),
+%       booktabs = TRUE,
+%       add.to.row = list(pos = as.list(rws), command = col))
+%
+%
+% @
+%
+% <<Meth-and-Occupancy-regression-genomic-locations, echo=F, eval=T>>=
+%
+%   file.bed <- "../../DATA/processed/RData/peaks-all-annotated.txt"
+%   data.bed <- read.delim(file.bed)
+%
+%   idx <- c()
+%   for (i in 1:nrow(data.affinityConsensus))
+%   {
+%
+%     tmp.chr <- data.affinity$CHR[idx.rowConsensus[i]]
+%     tmp.start <- data.affinity$START[idx.rowConsensus[i]]
+%     tmp.end <- data.affinity$END[idx.rowConsensus[i]]
+%
+%     tmp.idx <- which(data.bed$seqnames==paste("chr", tmp.chr, sep="") & data.bed$start==tmp.start+1)
+%     idx[i] <- tmp.idx
+%
+%
+%   }
+%
+%   rows.consensusAnnotated <- data.bed[idx,]
+%   rm(idx, tmp.chr, tmp.start, tmp.end)
+%
+%
+%   # add genomic annotations to the regression results
+%   rows.consensusAnnotated$genomicLocation <- as.character(rows.consensusAnnotated$annotation)
+%   idx.exon <- grep("Exon", rows.consensusAnnotated$annotation)
+%   idx.intron <- grep("Intron", rows.consensusAnnotated$annotation)
+%   rows.consensusAnnotated$genomicLocation[idx.exon] <- "Exon"
+%   rows.consensusAnnotated$genomicLocation[idx.intron] <- "Intron"
+%
+%   reg.mcAnnotated <- cbind(rows.consensusAnnotated, reg.mc)
+%   reg.mcGpAnnotated <- cbind(rows.consensusAnnotated, reg.mcGp)
+%
+%   dir.results <- "../../Results/3696-report-integrative/"
+%   fileOut.methOccupancyReg <- "TABLE-methylation-occupancy-regression-annotated.txt"
+%   fileOut.methOccupancyRegGp <- "TABLE-methylation-occupancy-regression-inclGp-annotated.txt"
+%   write.table(reg.mcAnnotated[idx.mc,], paste(dir.results, fileOut.methOccupancyReg, sep=""), sep="\t", quote=F)
+%   write.table(reg.mcGpAnnotated[idx.mcGp,], paste(dir.results, fileOut.methOccupancyRegGp, sep=""), sep="\t", quote=F)
+%
+%
+% @
+%
+% <<Meth-and-Occupancy-regression-genomic-locations-2, echo=F>>=
+%
+%   reg.sign <- reg.mcAnnotated[idx.mc,]
+%   regGp.sign <- reg.mcGpAnnotated[idx.mcGp,]
+%
+%   #summary(as.factor(reg.sign$genomicLocation))
+%   #summary(as.factor(regGp.sign$genomicLocation))
+%
+%
+%   reg.sign$betaFlag <- "beta positive"
+%   reg.sign$betaFlag[reg.sign$beta.est<0] <- "beta negative"
+%
+%   regGp.sign$betaFlag <- "beta positive"
+%   regGp.sign$betaFlag[regGp.sign$beta.Estimate<0] <- "beta negative"
+%
+%
+%   g.reg <- ggplot(reg.sign, aes(reg.sign$genomicLocation, fill=genomicLocation))+geom_bar()+scale_fill_brewer(palette="Set3")+theme(legend.title=element_blank())+ coord_flip()+xlab("")+theme(legend.position = "top")
+%   g.regBeta <- ggplot(reg.sign, aes(reg.sign$genomicLocation, fill=betaFlag))+geom_bar()+scale_fill_brewer(palette="Set1")+theme(legend.title=element_blank())+ coord_flip()+xlab("")+theme(legend.position = "top")
+%
+%
+%   g.regGp <- ggplot(regGp.sign, aes(regGp.sign$genomicLocation, fill=genomicLocation))+geom_bar()+scale_color_brewer(palette="Set3")+theme(legend.title=element_blank())+ coord_flip()+xlab("")+theme(legend.position = "top")
+%   g.regGpBeta <- ggplot(regGp.sign, aes(regGp.sign$genomicLocation, fill=betaFlag))+geom_bar()+scale_fill_brewer(palette="Set1")+theme(legend.title=element_blank())+ coord_flip()+xlab("")+theme(legend.position = "top")
+%
+%   #grid.arrange(g.reg,  g.regBeta, ncol=1)
+%
+% @
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<Fig-Meth-and-Occupancy-regression-by-genomic-location, echo=F, fig.width=14>>=
+%
+%   grid.arrange(g.regBeta, g.regGpBeta, ncol=1)
+%
+% @
+% \caption{Significant regression models by genomic location: without (top) and with (bottom) condition as predictor variable}
+% \label{fig:Regression-genomic-location}
+% \end{center}
+% \end{figure}
+%
+
+
+\section{Results II}
+% \subsection{CTCF binding sites}
+% <<mdraft-ctcf-input, echo=F, eval=TRUE, include=FALSE>>=
+%   rm(list=ls())
+%
+%   library(ChIPseeker)
+%   library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+%   library(DiffBind)
+%   library(diffloop)
+%   library(ReactomePA)
+%   library(clusterProfiler)
+%   txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+%
+%   # Meta data
+%   inp.meta <- "../../DATA/Meta/metaData_20180814.txt"
+%   m.meta <- read.delim(inp.meta)
+%   m.meta$ChIPseq <- as.factor(m.meta$ChIPseq)
+%   m.meta$Drug <- as.factor(m.meta$Drug)
+%   idx.drug <- m.meta$Drug==1
+%
+%   #summary(m.meta[!idx.drug, ])
+%   #table(m.meta$ChIPseq[!idx.drug], m.meta$Condition[!idx.drug])
+%
+%   # DiffBind .RData
+%   load("../../Uppmax-bianca/nbis-3696-integrative/2018-08-27/DiffBind/DiffBind_nk/diffDiff_nk.RData")
+%
+%   #dba.show(pctcf_nk, bContrasts = TRUE)
+%   #dba.plotBox(pctcf_nk, contrast=1)
+%   #db.test <- dba.report(pctcf_nk, contrast = 1)
+%   #no.fc <- data.frame(Group1=sum(db.test$Fold>0), Group2=sum(db.test$Fold<0))
+%   #dba.show(pctcf_nk, bContrasts = TRUE)
+%
+%   peaks.all <- dba.peakset(pctcf_nk, bRetrieve = TRUE)
+%   peaks.aml_nbm <- dba.report(pctcf_nk, 1)
+%   peaks.aml_TET2_NMP1 <- dba.report(pctcf_nk, 2)
+%   peaks.noMut_TET2 <- dba.report(pctcf_nk, 3)
+%
+%   # Peaks to run data analyses on
+%   peaks.run <- peaks.all
+%   peaks.run <- addchr(peaks.run)
+%
+%   # Annotate peaks
+%   peaks.annotate <- annotatePeak(peaks.run, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+%
+%   # Enrichment analysis using nearest gene
+%   pathway1 <- enrichPathway(as.data.frame(peaks.annotate)$geneId)
+%   #head(pathway1, 2)
+%   #dotplot(pathway1)
+%
+%   # Enrichment analysis with many-to-many mapping
+%   gene <- seq2gene(peaks.run, tssRegion = c(-1000, 1000), flankDistance = 3000, TxDb=txdb)
+%   pathway2 <- enrichPathway(gene)
+%   #head(pathway2, 2)
+%   #dotplot(pathway2)
+%
+%   # Peaks distribution across chromosomes
+%   plot.covplot <- covplot(peaks.run)
+%   save.image("../../scratch/cache/3696-report-integrative/tmp-ctcf.RData")
+%
+% @
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<fig-ctcf-covplot, echo=F, cache=TRUE>>=
+%   rm(list=ls())
+%   load("../../scratch/cache/3696-report-integrative/tmp-ctcf.RData")
+%
+%   plot.covplot
+% @
+% \caption{Peaks locations over the whole genome}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<fig-ctcf-upsetplot, echo=F, fig.width=12>>=
+%  upsetplot(peaks.annotate, vennpie=FALSE)
+% @
+% \caption{Genomics annotations incl. overlap}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<fig-ctcf-pieplot, echo=F>>=
+%  plotAnnoPie(peaks.annotate)
+% @
+% \caption{Genomic annotations (pieplot)}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<fig-ctcf-vennpie, echo=F>>=
+% vennpie(peaks.annotate)
+% @
+% \caption{Genomic annotations (vennpie)}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<fig-ctcf-tss, fig.height=2, echo=F>>=
+% plotDistToTSS(peaks.annotate)
+% @
+% \caption{Distribution of binding sites upstream and downstream from the TSS of the nearest genes}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<fig-ctcf-pathway1, fig.height=4, echo=F>>=
+%   dotplot(pathway1)
+% @
+% \caption{Pathway enrichment analysis (nearest gene)}
+% \end{center}
+% \end{figure}
+%
+% \begin{figure}[H]
+% \begin{center}
+% <<fig-ctcf-pathway2, fig.height=4, echo=F>>=
+%   dotplot(pathway2)
+% @
+% \caption{Pathway enrichment analysis (many-to-many mapping)}
+% \end{center}
+% \end{figure}
+
+
+\subsection{Differential binding}
+<<md-diffBind-input, echo=F, results='asis'>>=
+
+  rm(list=ls())
+
+  library(ChIPseeker)
+  library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+  library(DiffBind)
+  library(diffloop)
+  library(ReactomePA)
+  library(clusterProfiler)
+  library(xtable)
+  txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+  # Meta data
+  inp.meta <- "../../DATA/Meta/metaData_20180814.txt"
+  m.meta <- read.delim(inp.meta)
+  m.meta$ChIPseq <- as.factor(m.meta$ChIPseq)
+  m.meta$Drug <- as.factor(m.meta$Drug)
+  idx.drug <- m.meta$Drug==1
+
+  #summary(m.meta[!idx.drug, ])
+  #table(m.meta$ChIPseq[!idx.drug], m.meta$Condition[!idx.drug])
+
+  # DiffBind .RData
+  load("../../Uppmax-bianca/nbis-3696-integrative/2018-08-27/DiffBind/DiffBind_nk/diffDiff_nk.RData")
+
+  #dba.show(pctcf_nk, bContrasts = TRUE)
+
+  peaks.all <- dba.peakset(pctcf_nk, bRetrieve = TRUE)
+  peaks.aml_nbm <- dba.report(pctcf_nk, 1)
+  peaks.aml_TET2_NMP1 <- dba.report(pctcf_nk, 2)
+  peaks.noMut_TET2 <- dba.report(pctcf_nk, 3)
+
+  chip.de <- dba.show(pctcf_nk, bContrasts = TRUE)
+  chip.foldUp <- c(sum(peaks.aml_nbm$Fold>0), sum(peaks.aml_TET2_NMP1$Fold>0), sum(peaks.noMut_TET2$Fold>0))
+  chip.foldDown <- c(sum(peaks.aml_nbm$Fold<0), sum(peaks.aml_TET2_NMP1$Fold<0), sum(peaks.noMut_TET2$Fold<0))
+
+  chip.de$Group1.Up <- chip.foldUp
+  chip.de$Group1.Down <- chip.foldDown
+  rm(chip.foldDown, chip.foldUp)
+
+  print(xtable(chip.de, caption = "Summary of differentially binding results", label="tab:diffBind-01"), caption.placement = "bottom",
+   size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-diffBind-peakOverlap, echo=F, fig.height=4, fig.width=4>>=
+  library(VennDiagram)
+
+  # Simple venn diagram
+  gr <- peaks.all
+  peaksStr.all <- paste(seqnames(gr), ":", start(gr)-1, "-", end(gr), sep="")
+  gr <- peaks.aml_nbm
+  peaksStr.aml_nmb <- paste(seqnames(gr), ":", start(gr)-1, "-", end(gr), sep="")
+  gr <- peaks.aml_TET2_NMP1
+  peaksStr.aml_TET2_NMP1 <- paste(seqnames(gr), ":", start(gr)-1, "-", end(gr), sep="")
+  gr <- peaks.noMut_TET2
+  peaksStr.noMut_TET2 <- paste(seqnames(gr), ":", start(gr)-1, "-", end(gr), sep="")
+
+  peaksStr.noMut_TET2_AML_NBM <- intersect(peaksStr.noMut_TET2, peaksStr.aml_nmb)
+
+  list.venn <- list(AML_NBM=peaksStr.aml_nmb, noMut_TET2=peaksStr.noMut_TET2)
+  col.venn <- brewer.pal(3, "Set1")
+
+  plot.venny <- venn.diagram(list.venn, filename = NULL, fill=c(col.venn[1], col.venn[2]), alpha=c(0.5,0.5), cex = 1, cat.fontface=2, cat.default.pos="text", category.names = c("AML vs. NBM", "TET2- vs. TET2+"), cat.pos=6, cat.dist=0.15)
+  grid.draw(plot.venny)
+
+@
+\caption{Differentially bounded sites: venn diagram}
+\end{center}
+\end{figure}
+
+<<diffBind-group-compare, echo=F, include=FALSE>>=
+
+  # Peaks to run data analyses on
+  peaks.run <- peaks.all
+  peaks.run <- addchr(peaks.run)
+
+  idx.common <- match(peaksStr.noMut_TET2_AML_NBM, peaksStr.all)
+  idx.AMLspecific <- match(setdiff(peaksStr.aml_nmb, peaksStr.noMut_TET2), peaksStr.all)
+  idx.TET2specific <- match(setdiff(peaksStr.noMut_TET2, peaksStr.aml_nmb), peaksStr.all)
+
+  # Annotate peaks
+  peaks.annotateCommon <- annotatePeak(peaks.run[idx.common,], tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+  peaks.annotateAMLspecific<- annotatePeak(peaks.run[idx.AMLspecific,], tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+  peaks.annotateTET2Specifc <- annotatePeak(peaks.run[idx.TET2specific,], tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+
+  list.peaks <- list(AML=peaks.annotateAMLspecific, TET2=peaks.annotateTET2Specifc, Common=peaks.annotateCommon)
+@
+
+
+\begin{figure}[H]
+\begin{center}
+<<fig-diffBind-group-compare-AnnoBar, echo=F, fig.height=5>>=
+
+  plotAnnoBar(list.peaks)
+
+@
+\caption{Differentially bounded sites: annotation comparison}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-diffBind-group-compare-plotDistToTss, echo=F, fig.height=5>>=
+  plotDistToTSS(list.peaks)
+@
+\caption{Differentially bounded sites: distribution to TSS comparison}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-diffBind-group-compare-KEGG, echo=F, fig.height=5>>=
+
+  genes = lapply(list.peaks, function(i) as.data.frame(i)$geneId)
+  names(genes) = sub("_", "\n", names(genes))
+  compKEGG <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichKEGG",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+  dotplot(compKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis")
+
+@
+\caption{Differentially bounded sites: biological themes comparison}
+\end{center}
+\end{figure}
+
+
+\subsection{Differentially methylated probes}
+
+<<DMP-input, echo=F, cache=FALSE>>=
+
+  rm(list=ls())
+  load("../../DATA/processed/RData/DMP.RData")
+  library(scater)
+
+  # Meta data
+  inp.meta <- "../../DATA/Meta/metaData_20180814.txt"
+  m.meta <- read.delim(inp.meta)
+  m.meta$ChIPseq <- as.factor(m.meta$ChIPseq)
+  m.meta$Drug <- as.factor(m.meta$Drug)
+  idx.drug <- m.meta$Drug==1
+
+@
+
+<<DMP-summary, echo=F, results='asis', cache=FALSE>>=
+
+  idx.karotypeCMPX <- which(data.beta$pd$Sample_Karyotype=="CMPX")
+
+  dmp.nbm_aml <- data.DMP$NBM_to_AML
+  idx.001 <- which(dmp.nbm_aml$adj.P.Val<0.001)
+
+  summary.05 <- c(nrow(dmp.nbm_aml), length(which(dmp.nbm_aml$logFC>0)), length(which(dmp.nbm_aml$logFC<0)))
+  summary.001 <- c(length(idx.001), length(which(dmp.nbm_aml$logFC[idx.001]>0)), length(which(dmp.nbm_aml$logFC[idx.001]<0)))
+  summary.dmp <- rbind(summary.05, summary.001)
+
+  colnames(summary.dmp) <- c("No", "Down", "Up")
+  rownames(summary.dmp) <- c("adj-Pval 0.05", "adj-Pval 0.001")
+
+  print(xtable(summary.dmp, caption = "Summary of differentially methylated probes", label="tab:dmp-01"), caption.placement = "bottom",
+   size="scriptsize",
+  include.rownames=TRUE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+  # Fold changes are in refrence to AML, not NBM
+
+  # test.cg <- "cg15709989"
+  # test.idx <- which(rownames(beta.norm)==test.cg)
+  #
+  # length(data.beta$pd$Sample_Group)
+  # boxplot(beta.norm[test.idx, -idx.karotypeCMPX]~data.beta$pd$Sample_Group[-idx.karotypeCMPX])
+  #
+
+@
+
+
+\begin{figure}[H]
+\begin{center}
+<<fig-DMP-pca, echo=F, fig.height=5, fig.width=5>>=
+
+  idx.sign <- match(rownames(dmp.nbm_aml), rownames(beta.norm))
+
+  dmp.col <- brewer.pal(3, "Set1")
+  dmp.pca <- prcomp(t(beta.norm[idx.sign, -idx.karotypeCMPX]), center = TRUE, scale. = FALSE)
+  dmp.pcaFrame <- data.frame(PC1=dmp.pca$x[,1], PC2=dmp.pca$x[,2], group=data.beta$pd$Sample_Group[-idx.karotypeCMPX])
+
+  pca1 <- ggplot(dmp.pcaFrame, aes(PC1, PC2, color=group))+geom_point(size=2)+scale_colour_brewer(palette = "Set1")+theme(legend.title = element_blank(), text = element_text(size=12))+theme(legend.position="top")
+
+  pca1
+
+@
+\caption{PCA on differentially methylated sites}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+<<fig-dmp-annotations, echo=F, fig.width=12, fig.height=8>>=
+
+  #dim(dmp.nbm_aml)
+  #head(dmp.nbm_aml)
+
+  #summary(dmp.nbm_aml$feature)
+  #summary(dmp.nbm_aml$cgi)
+  #summary(dmp.nbm_aml$feat.cgi)
+
+  dmp.nbm_aml$FC="Up"
+  dmp.nbm_aml$FC[dmp.nbm_aml$logFC>0]="Down"
+  dmp.nbm_aml$FC <- as.factor(dmp.nbm_aml$FC)
+
+  plot.feature <- ggplot(dmp.nbm_aml, aes(x=factor(feature), fill=FC))+geom_bar(stat="count")+xlab("feature")+scale_fill_brewer(palette = "Set1")+theme(legend.title = element_blank(), text = element_text(size=12))
+
+  plot.cgi <- ggplot(dmp.nbm_aml, aes(x=factor(cgi), fill=FC))+geom_bar(stat="count")+xlab("cgi")+scale_fill_brewer(palette = "Set1")+theme(legend.title = element_blank(), text = element_text(size=12))
+
+  multiplot(plot.feature, plot.cgi, cols=1)
+
+@
+
+\caption{Differentially methylated sites: annotations}
+\end{center}
+\end{figure}
+
+\subsection{Methylation and transcription factor occupancy}
+<<meth-tf-input, echo=F, cache=FALSE>>=
+  rm(list=ls())
+  library(ChIPseeker)
+  library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+  library(DiffBind)
+  library(diffloop)
+  library(ReactomePA)
+  library(clusterProfiler)
+  library(xtable)
+  library(qvalue)
+  library(scater)
+  txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+  # DiffBind .RData
+  load("../../Uppmax-bianca/nbis-3696-integrative/2018-08-27/DiffBind/DiffBind_nk/diffDiff_nk.RData")
+  #dba.show(pctcf_nk, bContrasts = TRUE)
+  peaks.all <- dba.peakset(pctcf_nk, bRetrieve = TRUE)
+  peaks.aml_nbm <- dba.report(pctcf_nk, 1)
+  peaks.aml_TET2_NMP1 <- dba.report(pctcf_nk, 2)
+  peaks.noMut_TET2 <- dba.report(pctcf_nk, 3)
+
+  # DMP data
+  load("../../DATA/processed/RData/DMP.RData")
+  idx.karotypeCMPX <- which(data.beta$pd$Sample_Karyotype=="CMPX")
+
+  # Meta data
+  inp.meta <- "../../DATA/Meta/metaData_20180814.txt"
+  m.meta <- read.delim(inp.meta)
+  m.meta$ChIPseq <- as.factor(m.meta$ChIPseq)
+  m.meta$Drug <- as.factor(m.meta$Drug)
+  #idx.drug <- m.meta$Drug==1
+
+@
+
+<<meth-tf-report-DEs, echo=F, results='asis', cache=FALSE>>=
+
+  chip.de <- dba.show(pctcf_nk, bContrasts = TRUE)
+  chip.foldUp <- c(sum(peaks.aml_nbm$Fold>0), sum(peaks.aml_TET2_NMP1$Fold>0), sum(peaks.noMut_TET2$Fold>0))
+  chip.foldDown <- c(sum(peaks.aml_nbm$Fold<0), sum(peaks.aml_TET2_NMP1$Fold<0), sum(peaks.noMut_TET2$Fold<0))
+
+  chip.de$Group1.Up <- chip.foldUp
+  chip.de$Group1.Down <- chip.foldDown
+  rm(chip.foldDown, chip.foldUp)
+
+  print(xtable(chip.de[1,], caption = "Summary of differentially binding results", label="tab:diffBind-02"), caption.placement = "bottom",
+   size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+   dmp.nbm_aml <- data.DMP$NBM_to_AML
+  idx.001 <- which(dmp.nbm_aml$adj.P.Val<0.001)
+
+  summary.05 <- c(nrow(dmp.nbm_aml), length(which(dmp.nbm_aml$logFC>0)), length(which(dmp.nbm_aml$logFC<0)))
+  summary.001 <- c(length(idx.001), length(which(dmp.nbm_aml$logFC[idx.001]>0)), length(which(dmp.nbm_aml$logFC[idx.001]<0)))
+  summary.dmp <- rbind(summary.05, summary.001)
+
+  colnames(summary.dmp) <- c("No", "Down", "Up")
+  rownames(summary.dmp) <- c("adj-Pval 0.05", "adj-Pval 0.001")
+
+  print(xtable(summary.dmp, caption = "Summary of differentially methylated probes", label="tab:dmp-02"), caption.placement = "bottom",
+   size="scriptsize",
+  include.rownames=TRUE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+  rm(summary.001, summary.05, summary.dmp, chip.de, idx.001)
+
+@
+
+<<meth-tf-matrix, echo=F, cache=FALSE>>=
+
+  # Occupancy matrix
+  data.occupancy <- as.data.frame(pctcf_nk$binding)
+  rownames(data.occupancy) <- paste(data.occupancy$CHR, ":", data.occupancy$START, "-", data.occupancy$END, sep="")
+  matrix.occupany <- as.matrix(data.occupancy[, -c(1:3)])
+  colnames(matrix.occupany) <- gsub("NBM", "NBM0", colnames(matrix.occupany))
+
+  # Methylation matrix
+  #head(beta.norm)
+  #head(beta.normAnnotated)
+  matrix.beta <- beta.norm
+
+  # Samples in common
+  samples.common <- intersect(colnames(matrix.occupany), colnames(matrix.beta))
+  matrix.occupany <- matrix.occupany[, match(samples.common, colnames(matrix.occupany))]
+  matrix.beta <- matrix.beta[, match(samples.common, colnames(matrix.beta))]
+
+  rm(data.occupancy, samples.common)
+
+@
+
+<<meth-tf-overlap, echo=F, cache=FALSE>>=
+
+  # Number of overlapping DMPs and diffBind peaks
+
+  # DMP probes regions
+  dmp.probes <- data.DMP$NBM_to_AML
+  dmp.probes <- match(rownames(dmp.probes), rownames(beta.normAnnotated))
+  dmp.probes <- beta.normAnnotated[dmp.probes, 1:10]
+  dmp.probes$seqnames <- as.numeric(gsub("chr", "", dmp.probes$seqnames))
+
+  # DiffBind loci regions
+  gr <- peaks.aml_nbm
+  diffBind.loci<- data.frame(seqnames=seqnames(gr),
+                        starts=start(gr)-1,
+                        ends=end(gr),
+                        names=c(rep(".", length(gr))),
+                        scores=c(rep(".", length(gr))),
+                        strands=strand(gr))
+  rownames(diffBind.loci) <- names(gr)
+  rm(gr)
+
+  # Find diffBind loci that overlapp with at least one DMP probe
+  no.DMP <- c()
+  for (i in 1:nrow(diffBind.loci))
+  {
+    idx.dmp <- which(dmp.probes$seqnames==diffBind.loci$seqnames[i] & dmp.probes$start > diffBind.loci$starts[i] & dmp.probes$start < diffBind.loci$ends[i])
+    no.DMP[i] <- length(idx.dmp)
+    #if ((i %% 100)==0){print (i)}
+  }
+  diffBind.lociDMP <- diffBind.loci[no.DMP!=0,]
+
+  # For each diffBind-DMP loci report (if multiple, concatenate)
+  # - seqnames, starts, ends
+  # - index to occupancy matrix
+  # - index to beta matrix
+  # - cg name
+  c.seqnames <- c.start <- c.end <- c()
+  c.idxOccupancy <- c.idxBeta <- c.cg <- c()
+  for (i in 1:nrow(diffBind.lociDMP))
+  {
+        idx.dmp <- which(dmp.probes$seqnames==diffBind.lociDMP$seqnames[i] & dmp.probes$start > diffBind.lociDMP$starts[i] & dmp.probes$start < diffBind.lociDMP$ends[i])
+
+        c.seqnames <- c(c.seqnames, rep(diffBind.lociDMP$seqnames[i], length(idx.dmp)))
+        c.start <- c(c.start, rep(diffBind.lociDMP$starts[i], length(idx.dmp)))
+        c.end <- c(c.end, rep(diffBind.lociDMP$ends[i], length(idx.dmp)))
+        c.idxOccupancy <- c(c.idxOccupancy, rep(as.numeric(rownames(diffBind.lociDMP)[i]), length(idx.dmp)))
+        #c.idxBeta <- c(c.idxBeta, )
+        c.cg <- c(c.cg, rownames(dmp.probes)[idx.dmp])
+  }
+  c.idxBeta <- match(c.cg, rownames(beta.norm))
+
+  # Pointer to matrix occupancy (all peaks) and matrix beta (all probes)
+  p.diffBindDMP <- data.frame(seqnames=c.seqnames, starts=c.start, ends=c.end, idxOcc=c.idxOccupancy, cg=c.cg, idxCg=c.idxBeta)
+
+  rm(idx.dmp, c.seqnames, c.start, c.end, c.idxOccupancy, c.idxBeta, c.cg)
+
+  #test.cg <- "cg01287377"
+  #beta.normAnnotated[match(test.cg, rownames(beta.normAnnotated)),]
+
+@
+
+<<meth-tf-loci-statistics, echo=F, results='asis', cache=FALSE>>=
+
+  # Number of overlapping diffBind loci with DMP
+  summary.noDMP <- data.frame(loci=summary(as.factor(no.DMP)))
+  rownames(summary.noDMP) <- paste("DMP", rownames(summary.noDMP))
+
+  print(xtable(summary.noDMP, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes", label="tab:diffBind-dmp-01"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+
+  # Distribution over chromosomes
+  o <- c(1:22, "X", "Y")
+  loci.summary <- table(no.DMP[no.DMP!=0], diffBind.loci$seqnames[no.DMP!=0])
+  idx.o <- match(o, colnames(loci.summary))
+  loci.summary <- loci.summary[, idx.o]
+  rownames(loci.summary) <- paste("DMP", rownames(loci.summary))
+
+  print(xtable(loci.summary, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes: distribution over chromosomes", label="tab:diffBind-dmp-02"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+
+  rm(loci.summary, o, idx.o,  summary.noDMP, no.DMP)
+
+@
+
+
+<<meth-tf-correlation, echo=F, include=TRUE, results='asis', cache=FALSE>>=
+
+  c.cor <- c()
+  c.corPvalue <- c()
+  for (i in 1:nrow(p.diffBindDMP))
+  {
+    c.cor[i] <- cor(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupany[p.diffBindDMP$idxOcc[i],], method = "spearman")
+    c.corTest <- cor.test(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupany[p.diffBindDMP$idxOcc[i],], method = "spearman")
+    c.corPvalue[i] <-c.corTest$p.value
+  }
+
+  c.corQvalue <- p.adjust(c.corPvalue, method = "fdr")
+  p.diffBindDMP$cor <- c.cor
+  p.diffBindDMP$pval <- c.corPvalue
+  p.diffBindDMP$lfdr <- c.corQvalue
+
+
+  idx.sign <- which(p.diffBindDMP$lfdr<0.1)
+  p.diffBindDMP$sign <- 0
+  p.diffBindDMP$sign[idx.sign] <- 1
+  p.diffBindDMP$corSign <- "Positive"
+  p.diffBindDMP$corSign[p.diffBindDMP$cor<0] <- "Negative"
+
+  #head(peaks.aml_nbm)
+  #head(p.diffBindDMP)
+
+  tmp.idx <- match(p.diffBindDMP$idxOcc, names(peaks.aml_nbm))
+  p.diffBindDMP$Fold <- peaks.aml_nbm$Fold[tmp.idx]
+  p.diffBindDMP$FoldSign <- "Up"
+  p.diffBindDMP$FoldSign[p.diffBindDMP$Fold<0] <- "Down"
+
+  p.diffBindDMP$regions <- paste(p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+
+  p.diffBindDMPsig <- p.diffBindDMP[idx.sign,]
+
+  #summary(as.factor(p.diffBindDMP$corSign))
+
+  rm(c.cor, c.corTest, i, tmp.idx)
+
+  no.sign <- data.frame(all=nrow(p.diffBindDMP), sign=table(p.diffBindDMP$sign)[2], not=table(p.diffBindDMP$sign)[1])
+  rownames(no.sign) <- "loci"
+  print(xtable(no.sign, caption = "Summary of differentially bounded loci correlated with overlapping DMP", label="tab:meth-tf-cor"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+
+
+  no.sign <- table(p.diffBindDMPsig$corSign, p.diffBindDMPsig$FoldSign)
+  colnames(no.sign) <- c("AML down", "AML up")
+
+    print(xtable(no.sign, caption = "Summary of differentially bounded loci correlated with overlapping DMP: including AML effect and correlation sign", label="tab:meth-tf-cor-AML-effect"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-meth-tf-correlation-histogram, echo=F, fig.height=6, cache=FALSE>>=
+  #idx.sign <- p.diffBindDMP$lfdr<0.1
+
+  par(mfrow=c(2,1))
+  hist(p.diffBindDMP$cor, n=150, main="", xlab="Pearson correlation coefficient")
+  hist(p.diffBindDMP$cor[idx.sign], n=150, main="", xlab="Pearson correlation coefficient")
+
+@
+\caption{Histogram of Pearson correlation coefficients: for all loci (top) and for the ones with significant methylation-occupancy association (bottom)}
+\end{center}
+\end{figure}
+
+
+<<meth-tf-plots, echo=F, include=FALSE, eval=FALSE>>=
+
+  # Folders for individual plots (only significant loci)
+  dir.results <- "../../Results/3696-report-integrative/"
+  fig.cor <- paste(dir.results, "fig-meth-tf-cor", sep="")
+  dir.create(fig.cor, showWarnings = FALSE)
+
+  for (i in 1:nrow(p.diffBindDMPsig))
+  {
+    tmp.plot <- paste(fig.cor, "/fig-meth-tf-", i, ".pdf", sep="")
+
+    pdf(tmp.plot, width=14)
+    tmp.data <- data.frame(methylation=matrix.beta[p.diffBindDMPsig$idxCg[i],], occupancy=matrix.occupany[p.diffBindDMPsig$idxOcc[i],])
+    tmp.data$group <- "AML"
+    tmp.data$group[1:3] <- "NBM"
+
+    g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])
+    g2 <- ggplot(tmp.data, aes(x=methylation, y=occupancy, color=group))+geom_point()+scale_colour_brewer(palette = "Set1")+theme(legend.title=element_blank())+ggtitle(p.diffBindDMP$regions[i])
+
+    multiplot(g1, g2, cols=2)
+
+    dev.off()
+  }
+
+@
+
+
+\begin{figure}[H]
+\begin{center}
+<<fig-meth-ft-cor-example-negative-01, echo=F, fig.height=4, cache=FALSE>>=
+
+  i=1
+    tmp.data <- data.frame(methylation=matrix.beta[p.diffBindDMPsig$idxCg[i],], occupancy=matrix.occupany[p.diffBindDMPsig$idxOcc[i],])
+    tmp.data$group <- "AML"
+    tmp.data$group[1:3] <- "NBM"
+
+    g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])
+    g2 <- ggplot(tmp.data, aes(x=methylation, y=occupancy, color=group))+geom_point()+scale_colour_brewer(palette = "Set1")+theme(legend.title=element_blank())+ggtitle(p.diffBindDMP$regions[i])
+
+    multiplot(g1, g2, cols=2)
+
+@
+
+\caption{Example of loci with significant methylation and occupancy association: decreased affinity}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+<<fig-meth-ft-cor-example-negative-02, echo=F, fig.height=4, cache=FALSE>>=
+
+  i=2
+    tmp.data <- data.frame(methylation=matrix.beta[p.diffBindDMPsig$idxCg[i],], occupancy=matrix.occupany[p.diffBindDMPsig$idxOcc[i],])
+    tmp.data$group <- "AML"
+    tmp.data$group[1:3] <- "NBM"
+
+    g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])
+    g2 <- ggplot(tmp.data, aes(x=methylation, y=occupancy, color=group))+geom_point()+scale_colour_brewer(palette = "Set1")+theme(legend.title=element_blank())+ggtitle(p.diffBindDMP$regions[i])
+
+    multiplot(g1, g2, cols=2)
+
+@
+
+\caption{Example of loci with significant methylation and occupancy association: increased affinity}
+\end{center}
+\end{figure}
+
+
+
+<<meth-tf-peak-lists, echo=F, cache=FALSE, include=FALSE>>=
+
+    peaks.loci_all <- peaks.all[unique(p.diffBindDMPsig$idxOcc),]
+    peaks.loci_all <- addchr(peaks.loci_all)
+
+    idx <- which(p.diffBindDMPsig$corSign=="Negative" & p.diffBindDMPsig$FoldSign=="Up")
+    peaks.loci_negative_up <- peaks.all[unique(p.diffBindDMPsig$idxOcc[idx]),]
+    peaks.loci_negative_up <- addchr(peaks.loci_negative_up)
+
+    idx <- which(p.diffBindDMPsig$corSign=="Negative" & p.diffBindDMPsig$FoldSign=="Down")
+    peaks.loci_negative_down <- peaks.all[unique(p.diffBindDMPsig$idxOcc[idx]),]
+    peaks.loci_negative_down <- addchr(peaks.loci_negative_down)
+
+
+    peaks.loci_all_annotate <-annotatePeak(peaks.loci_all, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+    peaks.loci_negative_up_annotate <-annotatePeak(peaks.loci_negative_up, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+    peaks.loci_negative_down_annotate <-annotatePeak(peaks.loci_negative_down, tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+
+
+  list.peaks <- list(ALL=peaks.loci_all_annotate, IncreasedAff=peaks.loci_negative_up_annotate, DecreasedAff=peaks.loci_negative_down_annotate)
+  #
+
+@
+
+
+\begin{figure}[H]
+\begin{center}
+<<fig-meth-tf-group-compare-AnnoBar, echo=FALSE, fig.height=4, cache=FALSE>>=
+
+  plotAnnoBar(list.peaks)
+
+@
+\caption{Differentially bounded sites: annotation comparison}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-meth-tf-group-compare-plotDistToTss, echo=F, fig.height=4>>=
+plotDistToTSS(list.peaks)
+@
+\caption{Differentially bounded sites: distribution to TSS comparison}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+<<fig-meth-tf-group-compare-KEGG, echo=F, fig.height=5>>=
+
+    genes = lapply(list.peaks, function(i) as.data.frame(i)$geneId)
+  names(genes) = sub("_", "\n", names(genes))
+  compKEGG <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichKEGG",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+  dotplot(compKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis")
+
+
+@
+\caption{Differentially bounded sites: biological themes comparison}
+\end{center}
+\end{figure}
+
+
+
+
+% \section{Results III}
+% 
+% <<pctcf-setup, echo=F>>=
+% 
+%   library(DiffBind)
+%   library(gplots)
+%   library(ggplot2)
+%   library(scater)
+%   library(heatmap3)
+%   library(ChIPpeakAnno)
+%   library(RColorBrewer)
+%   library(xtable)
+%   
+% 
+%   rm(list=ls())
+%   
+%   func.color <- function(inp.group)
+%   {
+%   if (length(unique((inp.group)))>2) {colors.fav <- cols <- brewer.pal(length(unique(inp.group)), "Set1")
+%   }else  {colors.fav <- cols <- brewer.pal(4, "Set1")}
+%   group.unique <- unique(inp.group)
+%   out.color <- inp.group
+%   for (i in 1:length(unique(group.unique))){out.color[inp.group==group.unique[i]]=colors.fav[i]}
+%   out.color
+%   } 
+%   
+% @  
+% 
+% 
+% <<pctcf-input, echo=F>>=
+% 
+%   load("../../DATA/processed/RData/DiffBind/diffCounts_nk.RData")
+%   
+%   #pctcf_nk$samples$SampleID
+%   #pctcf_nk$samples$Factor
+%   #pctcf_nk$samples$Condition
+%   #pctcf_nk$samples$Replicate
+%   
+%   data.samples <- data.frame(ID=pctcf_nk$samples$SampleID, Factor=pctcf_nk$samples$Factor)
+%   data.condition <- c("NBM", "NBM", "NBM", "NBM", "NBM", 
+%                     "AML", "AML", "AML", "AML", "NPM1",
+%                     "TET2_NPM1", "NPM1", "AML", "TET2_NPM1", "TET2_NPM1",
+%                     "TET2", "TET2", "TET2", "TET2", "NPM1")
+%   data.samples$Condition <- data.condition
+% 
+% @
+% 
+% <<pctcf-peaks-all, echo=F>>=
+%   
+%   peaks.all <- dba.peakset(pctcf_nk, bRetrieve = TRUE)
+%   data.occupancy <- pctcf_nk$binding
+%   rownames(data.occupancy) <- paste("Chr", data.occupancy[,1], ":", data.occupancy[, 2], "-", data.occupancy[, 3], sep="")
+%   data.occupancy <- data.occupancy[, -c(1:3)]
+% 
+% @
+% 
+% 
+% \begin{figure}[H]
+% \begin{center}
+% <<fig03-pctcf-pca, echo=F, fig.height=5, fig.width=12>>=
+% 
+%   matrix.pca <- data.occupancy
+%   data.pca <- data.samples
+%   
+%   pca.model <- prcomp(t(matrix.pca), center=TRUE, scale.=TRUE)
+%   pca.frame <- data.frame(PC1=pca.model$x[,1], PC2=pca.model$x[,2], PC3=pca.model$x[,3], Factor=data.pca$Factor, Condition=data.pca$Condition)
+%   pca.eigs <- pca.model$sdev^2
+%   pca.var <- round(pca.eigs / sum(pca.eigs)*100,2)
+% 
+%   plot.pca12 <- ggplot(pca.frame, aes(PC1, PC2, colour=Factor, shape=Condition))+geom_point(size=2)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC2: ", pca.var[2], "% variance", sep=""))#+ggtitle("All")
+% plot.pca13 <- ggplot(pca.frame, aes(PC1, PC3, colour=Factor, shape=Condition))+geom_point(size=2)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC3: ", pca.var[3], "% variance", sep=""))
+% 
+% multiplot(plot.pca12, plot.pca13, cols=2)
+%   
+% @
+% \end{center}
+% \caption{PCA plot using affinity data for all sites, n=\Sexpr{nrow(data.occupancy)}}
+% \end{figure}
+% 
+% % \begin{figure}[H]
+% % \begin{center}
+% <<pctcf-diffMap, echo=F, fig.height=10, fig.width=12, eval=F>>=
+% 
+%   matrix.diffMap <- data.occupancy
+%   data.diffMap <- data.samples
+%   
+%   dm.euc <-destiny::DiffusionMap(t(matrix.diffMap), sigma='local', distance = 'euclidean')
+%   dm.cos <-destiny::DiffusionMap(t(matrix.diffMap), sigma='local', distance = 'cosine')
+%   
+%   frame.dm_euc <- as.data.frame(dm.euc)
+%   frame.dm_cos <- as.data.frame(dm.cos)
+%   
+%   frame.dm_euc$Factor <- as.factor(data.diffMap$Factor)
+%   frame.dm_euc$Condition <- as.factor(data.diffMap$Condition)
+%   
+%   frame.dm_cos$Factor <- as.factor(data.diffMap$Factor)
+%   frame.dm_cos$Condition <- as.factor(data.diffMap$Condition)
+%   
+%   plot.dm12_euc <- ggplot(frame.dm_euc, aes(DC1, DC2, colour=Factor, shape=Condition))+geom_point(size=2)+scale_color_brewer(palette = "Set1")
+%   plot.dm13_euc <- ggplot(frame.dm_euc, aes(DC1, DC3, colour=Factor, shape=Condition))+geom_point(size=2)+scale_color_brewer(palette = "Set1")
+%   
+%     plot.dm12_cos <- ggplot(frame.dm_cos, aes(DC1, DC2, colour=Factor, shape=Condition))+geom_point(size=2)+scale_color_brewer(palette = "Set1")
+%   plot.dm13_cos <- ggplot(frame.dm_cos, aes(DC1, DC3, colour=Factor, shape=Condition))+geom_point(size=2)+scale_color_brewer(palette = "Set1")
+%   
+% 
+% multiplot(plot.dm12_euc, plot.dm13_euc, plot.dm12_cos, plot.dm13_cos, cols=2)
+%   
+% @
+% % \end{center}
+% % \caption{Diffusion maps for all sites, n=\Sexpr{nrow(data.occupancy)}}
+% % \end{figure}
+% 
+% \begin{figure}[H]
+% \begin{center}
+% <<fig03-pctct-heatmap, echo=F, fig.height=12, fig.width=12>>=
+% n.top <- 1000 
+% 
+% # nrow(data.occupancy)#2000
+% # cv.data <- apply(data.occupancy, 1, sd)/apply(data.occupancy, 1, mean)
+% # cv.o <- order(cv.data, decreasing = TRUE)
+% # data.heatmap <- data.occupancy[cv.o[1:25],]
+% 
+% iqr.data <- rowIQRs(data.occupancy)
+% iqr.o <- order(iqr.data, decreasing = TRUE)
+% data.heatmap <- data.occupancy[iqr.o[1:n.top],]
+% #row.names(data.heatmap) <- NULL
+% 
+% #col.factor <- func.color(as.character(data.samples$Factor))
+% #col.condition <- func.color(as.character(data.samples$Condition))
+% #ColSideColors <- cbind(Factor=col.factor, Condition=col.condition)
+% # quartz()
+% # heatmap3(data.heatmap, ColSideColors=ColSideColors, showRowDendro=FALSE)
+% 
+% ColSideAnn <- data.frame(Condition=data.samples$Condition)
+% rownames(ColSideAnn) <- data.samples$ID
+% 
+% #quartz()  
+% heatmap3(data.heatmap, 
+%          showRowDendro=TRUE,
+%          ColSideCut=0.3, 
+%          ColSideAnn=ColSideAnn, 
+%          ColSideFun=function(x) showAnn(x), 
+%          ColSideWidth=0.8, 
+%          RowAxisColors=1,
+%          verbose=FALSE, 
+%          labRow = FALSE)
+% 
+% @
+% \end{center}
+% \caption{Heatmap for top 1000 sites, based on IQR dispersion measure}
+% \end{figure}
+% 
+% 
+% <<pctcf-diffBind-regroup, echo=F>>=
+% 
+% data.tet2 <- rep("x", length(data.condition))
+% data.tet2[which(data.condition=="TET2")] <- "TET2+"
+% data.tet2[which(data.condition=="AML" | data.condition=="NPM1")] <- "TET2-"
+% 
+% data.nmp1 <- rep("x", length(data.condition))
+% data.nmp1[which(data.condition=="NPM1")] <- "NPM1+"
+% data.nmp1[which(data.condition=="AML" | data.condition=="TET2")] <- "NPM1-"
+% 
+% data.samples$condition <- as.factor(data.condition)
+% data.samples$TET2 <- as.factor(data.tet2)
+% data.samples$NPM1 <- as.factor(data.nmp1)
+% 
+% rm(data.tet2, data.nmp1)
+% #summary(data.samples)
+% 
+% @
+% 
+% <<pctcf-diffBind, echo=F>>=
+% 
+% # NBM vs. AML
+% pctcf_nbm <- dba.contrast(pctcf_nk, pctcf_nk$masks$NBM, pctcf_nk$masks$AML, "NBM", "AML")
+% #dba.show(pctcf_nbm, bContrasts = TRUE)
+% pctcf_nbm <- dba.analyze(pctcf_nbm, method=DBA_ALL_METHODS)
+% #dba.show(pctcf_nbm, bContrasts=T)
+% 
+% 
+% # Comparison TET2- vs. TET2+
+% pctcf_tet2 <- pctcf_nk
+% pctcf_tet2$samples$Condition <- data.samples$TET2
+% pctcf_tet2 <- dba.contrast(pctcf_tet2, pctcf_tet2$samples$Condition=="TET2-", pctcf_tet2$samples$Condition=="TET2+", "TET2_minus", "TET2")
+% #dba.show(pctcf_tet2, bContrasts = TRUE)
+% pctcf_tet2 <- dba.analyze(pctcf_tet2, method=DBA_ALL_METHODS)
+% #dba.show(pctcf_tet2, bContrasts=T)
+% 
+% #dba.plotMA(pctcf_tet2)
+% #dba.plotMA(pctcf_tet2, method=DBA_EDGER)
+% 
+% # Comparison NMP1- vs. NMP1+
+% #rm(pctcf_npm1)
+% pctcf_npm1 <- pctcf_nk
+% pctcf_npm1$samples$Condition <- data.samples$NPM1
+% pctcf_npm1 <- dba.contrast(pctcf_npm1, pctcf_npm1$samples$Condition=="NPM1-", pctcf_npm1$samples$Condition=="NPM1+", "NPM1_minus", "NPM1")
+% #dba.show(pctcf_npm1, bContrasts = TRUE)
+% pctcf_npm1 <- dba.analyze(pctcf_npm1, method=DBA_ALL_METHODS)
+% #dba.show(pctcf_npm1, bContrasts = T)
+% #dba.plotMA(pctcf_npm1, method=DBA_EDGER)
+% # NOTE: will keep EDGER results for this comparision as it looks much better on the MA plot
+% 
+% #save.image("../../scratch/cache/tmp-r3-diffBind.RData")
+% 
+% 
+% @
+% 
+% <<pctcf-diffBind-overview-table, echo=F, results='asis'>>=
+%  
+% peaks.nbm <- dba.report(pctcf_nbm, 1)
+% peaks.tet2 <- dba.report(pctcf_tet2, 1)
+% peaks.npm1 <- dba.report(pctcf_npm1, 1, method = DBA_EDGER)
+% 
+% chip.de <- rbind(dba.show(pctcf_nbm, bContrasts = TRUE),
+%                  dba.show(pctcf_tet2, bContrasts = TRUE), 
+%                  dba.show(pctcf_npm1, bContrasts = TRUE))
+% 
+% no.deseq2 <- as.numeric(as.matrix(chip.de$DB.DESeq2))
+% no.edgeR <- as.numeric(as.matrix(chip.de$DB.edgeR))
+% 
+% chip.de$sign <- no.deseq2
+% chip.de$sign[3] <- no.edgeR[3]
+% 
+% #dba.plotBox(pctcf_nbm)
+% #dba.plotBox(pctcf_tet2)
+% #dba.plotBox(pctcf_npm1, method=DBA_EDGER)
+% 
+% no.foldUp <- c(sum(peaks.nbm$Fold<0), sum(peaks.tet2$Fold<0), sum(peaks.npm1$Fold<0))
+% no.foldDown <- c(sum(peaks.nbm$Fold>0), sum(peaks.tet2$Fold>0), sum(peaks.npm1$Fold>0))
+% 
+% chip.de$FoldUp <- no.foldUp
+% chip.de$FoldDown <- no.foldDown  
+% 
+% rm(no.foldDown, no.foldUp)
+% 
+% 
+% print(xtable(chip.de, caption = "Summary of differentially binding results", label="tab:diffBind-overview"), caption.placement = "bottom",
+%    size="scriptsize",
+%   include.rownames=FALSE,
+%   rotate.colnames=FALSE,
+%   floating=TRUE,
+%   table.placement="H")
+% 
+% 
+% @
+% 
+% 
+% \begin{figure}[H]
+% \begin{center}
+% 
+% <<fig03-pctcf-venn, echo=F, fig.height=3, fig.width=3, include=TRUE>>=
+% library(VennDiagram)
+% 
+% list.venn <- list(NBM_AML=names(peaks.nbm), TET2=names(peaks.tet2), NPM1=names(peaks.npm1))
+% col.venn <- brewer.pal(3, "Set1")
+% 
+% plot.venny <- venn.diagram(list.venn, filename=NULL, fill=c(col.venn[1], col.venn[2], col.venn[3]), category.names = c("NBM vs. AML", "TET2- vs. TET2+", "NPM1- vs. NPM1+"))
+% grid.draw(plot.venny)
+% @
+% 
+% \end{center}
+% \caption{Venn diagram: significant binding sites}
+% \end{figure}
+% 
+% 
+% 
+% 
+% <<fig03-pctcf-sign-pca, echo=FALSE, include=FALSE>>=
+% 
+% peaks.sign <- sort(as.numeric(unique(c(names(peaks.nbm), TET2=names(peaks.tet2), NPM1=names(peaks.npm1)))))
+% length(peaks.sign)
+% 
+% 
+% data.occupancy_sign <- data.occupancy[peaks.sign, ]
+% 
+%   matrix.pca <- data.occupancy_sign
+%   data.pca <- data.samples
+%   
+%   pca.model <- prcomp(t(matrix.pca), center=TRUE, scale.=TRUE)
+%   pca.frame <- data.frame(PC1=pca.model$x[,1], PC2=pca.model$x[,2], PC3=pca.model$x[,3], Factor=data.pca$Factor, Condition=data.pca$Condition)
+%   pca.eigs <- pca.model$sdev^2
+%   pca.var <- round(pca.eigs / sum(pca.eigs)*100,2)
+% 
+%   plot.pca12 <- ggplot(pca.frame, aes(PC1, PC2, colour=Factor, shape=Condition))+geom_point(size=2)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC2: ", pca.var[2], "% variance", sep=""))#+ggtitle("All")
+% plot.pca13 <- ggplot(pca.frame, aes(PC1, PC3, colour=Factor, shape=Condition))+geom_point(size=2)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC3: ", pca.var[3], "% variance", sep=""))
+% 
+% multiplot(plot.pca12, plot.pca13, cols=2)
+% 
+% @
+% 
+% 
+% <<fig03-pctcf-sign-heatmap, echo=F, include=FALSE>>=
+% 
+% n.top <- nrow(data.occupancy_sign)
+% 
+% data.heatmap <- data.occupancy_sign
+% 
+% iqr.data <- rowIQRs(data.heatmap)
+% iqr.o <- order(iqr.data, decreasing = TRUE)
+% data.heatmap <- data.heatmap[iqr.o[1:n.top],]
+% 
+% data.heatmap <- data.occupancy_sign
+% #row.names(data.heatmap) <- NULL
+% 
+% #col.factor <- func.color(as.character(data.samples$Factor))
+% #col.condition <- func.color(as.character(data.samples$Condition))
+% #ColSideColors <- cbind(Factor=col.factor, Condition=col.condition)
+% # quartz()
+% # heatmap3(data.heatmap, ColSideColors=ColSideColors, showRowDendro=FALSE)
+% 
+% ColSideAnn <- data.frame(Condition=data.samples$Condition)
+% rownames(ColSideAnn) <- data.samples$ID
+% 
+% #quartz()  
+% heatmap3(data.heatmap, 
+%          showRowDendro=TRUE,
+%          ColSideCut=0.06, 
+%          ColSideAnn=ColSideAnn, 
+%          ColSideFun=function(x) showAnn(x), 
+%          ColSideWidth=0.8, 
+%          RowAxisColors=1,
+%          verbose=FALSE, 
+%          labRow = FALSE)
+% 
+% 
+% @
+% 
+
+
+
+
+
+
+
+
+
+
+
+
+
+% 
+% \section{Deliverable}
+% \begin{description}
+%   \item[IGV tracks] files and IGV batch script are on Box under \newline \href{https://stockholmuniversity.box.com/s/agelw5q631qb0no017esm0iu3oxuj1fd}{https://stockholmuniversity.box.com/s/agelw5q631qb0no017esm0iu3oxuj1fd}
+% \end{description}
+
+
+
+\newpage
+\printbibliography
+\end{document}  
+

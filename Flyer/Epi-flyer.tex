@@ -1,0 +1,191 @@
+\documentclass[12pt]{letter}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+\let\hlipl\hlkwb
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a6paper, 
+ left=15mm,
+ top=20mm,
+ right=15mm,
+ bottom=30mm}                   % ... or a4paper or a5paper or ...
+% % %\geometry{landscape}                % Activate for for rotated page geometry
+
+
+\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{amssymb}
+% \usepackage{dirtree}
+% \usepackage{subcaption}
+% \usepackage{multicol}
+%\setlength{\columnsep}{1cm}
+\usepackage[backend=bibtex, sorting=none, style=chicago-authordate]{biblatex}
+\setlength\bibitemsep{\baselineskip}
+%\usepackage[none]{hyphenat}
+\usepackage[british]{babel}
+\usepackage[export]{adjustbox}
+% \addbibresource{References.bib}
+\usepackage{booktabs}
+\usepackage{colortbl, xcolor}
+
+\hypersetup{%
+  colorlinks=true,% hyperlinks will be coloured
+  linkcolor=blue,% hyperlink text will be green
+  urlcolor=blue
+}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+%\graphicspath{ {/Users/olga/Documents/BILS/!PROJECTS/2616_zebrafish_mut/Documentation/Images/} }
+
+%% LOGOS
+\usepackage{fancyhdr}
+%\addtolength{\headheight}{2cm} % make more space for the header
+%\addtolength{\footheight}{2cm} % make more space for the header
+
+\pagestyle{fancyplain} % use fancy for all pages except chapter start
+%\chead{Epigenomics Data Analysis}
+%\lhead{\includegraphics[height=1.3cm, width=2cm]{Logos/NBIS-logo.png}} % left logo
+%\rhead{\includegraphics[height=1.3cm, width=4cm]{Logos/SciLifeLab-logo.jpg}} % right logo
+\renewcommand{\headrulewidth}{0pt} % remove rule below header
+
+\lfoot{\includegraphics[height=1.3cm, width=2cm]{Logos/NBIS-logo.png}} % left logo
+\rfoot{\includegraphics[height=1.3cm, width=4cm]{Logos/SciLifeLab-logo.jpg}} % right logo
+%\cfoot{nbis.se}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\begin{document}
+
+
+% FRONT PAGE
+\Large
+
+% Course title
+\textbf{Epigenomics Data Analysis}
+\normalsize
+Short course
+
+% Date and location
+\vspace{0.8cm}
+\large
+\begin{flushright} \textbf{August, 26th - 30th, 2019} % date
+\normalsize
+Stockholm, SciLifeLab % location
+\tiny
+
+% Generic NBIS course description
+National course open for PhD students, postdocs, researchers and other employees within Swedish universities.  
+
+% Link to website annoucement
+\small
+\href{https://www.scilifelab.se/events/epigenomics-data-analysis}{https://www.scilifelab.se/events/epigenomics-data-analysis/}
+\end{flushright} 
+
+% Course specific text
+\vspace{0.2cm}
+\normalsize
+%\begin{flushleft}
+\centering{
+Best practices for data processing and analysis for ChIP-seq, ATAC-seq, Illumina EPIC
+arrays, Bisulfite-seq. 
+Quality control.
+Peak calling. Motif enrichment.
+Differential binding, accessibility and
+methylation. Functional analyses.
+RNA-seq integration. Integrative
+visualizations.
+}
+%\end{flushleft}
+
+% BACK-PAGE
+\newpage 
+\cfoot{}
+% NBIS training events
+\Large
+\begin{flushleft}
+\textbf{NBIS training events}
+\newline \normalsize
+Up-coming events
+\end{flushleft}
+\vspace{0.5cm}
+\begin{flushleft}
+
+
+  \footnotesize \textbf{RNA-seq data analysis} \newline \scriptsize
+  starts May, 13th, Uppsala
+  
+  \footnotesize \textbf{Intro. to Bioinformatics using NGS data} \newline \scriptsize
+  starts May, 20th, G\"oteborg
+  
+  \footnotesize \textbf{Biostatistics Essentials} \newline \scriptsize
+  starts May, 21st, Uppsala
+  
+  \footnotesize \textbf{Data integration} \newline \scriptsize
+  starts September, 9th, Stockholm
+  
+  \footnotesize \textbf{Bioinformatics for Principal Investigators} \newline \scriptsize
+  starts September, 17th, Stockholm
+  
+  \footnotesize \textbf{Python programming} \newline \scriptsize
+  starts September, 23th, Uppsala
+  
+  
+\vspace{1cm}
+More events \& information: \newline
+\href{https://nbis.se/training/events.html}{https://nbis.se/training/events.html}
+
+\end{flushleft}
+
+
+
+
+
+\end{document}  
+

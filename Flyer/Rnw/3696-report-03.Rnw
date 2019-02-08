@@ -1,0 +1,1622 @@
+\documentclass[12pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ bottom=40mm}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{dirtree}
+\usepackage{subcaption}
+\usepackage{multicol}
+\setlength{\columnsep}{1cm}
+\usepackage[backend=bibtex, sorting=none, style=chicago-authordate]{biblatex}
+\setlength\bibitemsep{\baselineskip}
+%\usepackage[none]{hyphenat}
+\usepackage[british]{babel}
+\usepackage[export]{adjustbox}
+\addbibresource{References.bib}
+
+\usepackage{booktabs}
+\usepackage{colortbl, xcolor}
+
+\hypersetup{%
+  colorlinks=true,% hyperlinks will be coloured
+  linkcolor=blue,% hyperlink text will be green
+}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+%\graphicspath{ {/Users/olga/Documents/BILS/!PROJECTS/2616_zebrafish_mut/Documentation/Images/} }
+
+%% LOGOS
+\usepackage{fancyhdr}
+\addtolength{\headheight}{2cm} % make more space for the header
+\pagestyle{fancyplain} % use fancy for all pages except chapter start
+\lhead{\includegraphics[height=1.3cm, width=2cm]{Logos/NBIS-logo.png}} % left logo
+\rhead{\includegraphics[height=1.3cm, width=4cm]{Logos/SciLifeLab-logo.jpg}} % right logo
+\renewcommand{\headrulewidth}{0pt} % remove rule below header
+
+%% DEFINE TOOLS AND VARIABLES
+\newcommand{\staff}{Olga Dethlefsen}
+\newcommand{\staffWeb}{https://nbis.se/about/staff/olga-dethlefsen/}
+\newcommand{\affilations}{National Bioinformatics Infrastructure Sweden, Science for Life Laboratory, Stockholm University}
+\newcommand{\supportWeb}{http://nbis.se/support/support.html}
+\newcommand{\uppmaxWeb}{http://uppmax.uu.se/support-sv/faq/general-miscellaneous-faq/acknowledging-uppmax--snic--and-uppnex}
+\newcommand{\noIssue}{\#3696}
+\newcommand{\noUppmax}{/b2017080}
+\newcommand{\refGenome}{\texttt{GRCh38}}
+
+\newcommand{\fastqc}{\texttt{FastQC/0.11.5}}
+\newcommand{\trimmomatic}{\texttt{trimmomatic/0.36}}
+\renewcommand{\bowtie}{\texttt{bowtie/1.1.2}}
+\newcommand{\deepTools}{\texttt{deepTools/1.1.2}}
+\newcommand{\MACS}{\texttt{MACS/2.1.0}}
+\newcommand{\picard}{\texttt{picard/2.0.1}}
+\newcommand{\samtools}{\texttt{samtools/1.4}}
+\newcommand{\NGSUtils}{\texttt{NGSUtils/0.5.9}}
+\newcommand{\BEDOPS}{\texttt{BEDOPS/2.4.28}}
+\newcommand{\phantompeakqualtools}{\texttt{phantompeakqualtools/1.1}}
+\newcommand{\blackListed}{\texttt{https://www.encodeproject.org/annotations/ENCSR636HFF/}}
+\newcommand{\sratools}{\texttt{sratools/2.8.0}}
+\newcommand{\bedtools}{\texttt{BEDTools/2.26.0}}
+\newcommand{\Fseq}{\texttt{F-seq/1.85}}
+\newcommand{\MultiQC}{\texttt{MultiQC/1.6}}
+\newcommand{\DiffBind}{\texttt{DiffBind\_2.2.12}}
+\newcommand{\ChIPpeakAnno}{\texttt{ChIPpeakAnno\_3.8.9}}
+
+\renewcommand{\star}{\texttt{star/2.5.3a"}}
+\newcommand{\featureCounts}{\texttt{featureCounts}}
+\newcommand{\subread}{\texttt{subread/1.5.2}}
+%\newcommand{\refSource}{\texttt{http://www.ensembl.org/info/data/ftp/index.html}}
+\newcommand{\refSource}{\texttt{http://www.ensembl.org/}}
+
+
+%% BEGIN DOCUMENT
+\begin{document}
+
+%% TITLE PAGE
+\title{The role of CTCF binding in acute myeloid leukemia: integrative data analysis}
+\author{}
+\maketitle
+\thispagestyle{fancy}
+
+\vspace{2cm}
+\begin{center}
+\begin{tabular}{l r}
+Issue number: & {\noIssue} \\
+Request by: &  Huthayfa Mujahed\textless huthayf.mujahed@ki.se\textgreater\\ 
+Principal Investigator: &  S\"oren Lehmann\\
+Organisation: & Karolinska Institutet \\
+NBIS staff: & \staff
+\end{tabular}
+\end{center}
+
+%% TABLE OF CONTENTS
+\newpage
+\tableofcontents
+
+<<knitr, echo=FALSE>>=
+knitr::opts_chunk$set(echo = TRUE,
+size="scriptsize", 
+warning = FALSE, 
+message = FALSE,
+error = TRUE, 
+fig.path = "3696-report-figures/",
+cache=TRUE, 
+cache.path = "../../scratch/cache/3696-report-02/"
+)
+@
+
+%% SUPPORT REQUEST
+\newpage
+
+\section{Integrative analyses: overview}
+
+<<integrate-setup, echo=F, cache=T>>=
+  
+  rm(list=ls())
+  
+  library(GenomicRanges)
+  library(ChIPseeker)
+  library(xtable)
+  library(edgeR)
+  library(ggplot2)
+  library(scater)
+
+@
+
+<<integrate-input, echo=F, cache=T>>=
+
+  load("../../scratch/cache/tmp-epic.RData")
+  load("../../scratch/cache/tmp-chipseq.RData")
+  load("../../scratch/cache/tmp-rnaseq.RData")
+
+  peaks.aml <- peaks.nbm
+  peaks.aml_annotated <- peaks.nbm_annotated
+
+  rm(compKEGG, data.batchAdj, de.summary, de.top, fit, inp.annotation, lrt, my.contrast, my.design, de.sign, lrt.table, lrt.top)
+  rm(pca, pca.frame, pca12.batch, pca12.batch_adj, color.gr, de, idx.remove, n.top, p.thr)
+  rm(dmp.probes, fc.thr, group.aml, group.conditions, grp, npm1, peaks.sign, samples.remove, tet2, tet2_npm1, func.entrezID)
+  rm(peaks.nbm, peaks.nbm_annotated)
+
+@
+
+<<integrative-meta, echo=F, results='asis', cache=T>>=
+
+  # epic.meta
+  # chipseq.meta
+  # rnaseq.meta
+
+  samples.id <- sort(unique(c(as.character(epic.meta$ID),
+                        as.character(chipseq.meta$ID),
+                        as.character(rnaseq.meta$ID))))
+
+  int.meta <- data.frame(ID=samples.id)
+  int.meta$Factor="AML"
+  int.meta$Factor[grep("^NBM", samples.id)] <- "NBM"
+
+  int.meta$Condition <- "NBM"
+  int.meta$EPIC=0
+  int.meta$ChIPseq=0
+  int.meta$RNAseq=0
+
+  int.meta$EPIC[match(epic.meta$ID, int.meta$ID)] <- 1
+  int.meta$ChIPseq[match(chipseq.meta$ID, int.meta$ID)] <- 1
+  int.meta$RNAseq[match(rnaseq.meta$ID, int.meta$ID)] <- 1
+
+  samples.aml <- c("UPN01", "UPN02", "UPN03", "UPN08", "UPN13")
+  samples.npm1 <- c("UPN09", "UPN11", "UPN20")
+  samples.tet2 <- c("UPN16", "UPN17", "UPN18", "UPN19")
+  samples.tet2_npm1 <- c("UPN14", "UPN15")
+
+  int.meta$Condition[match(samples.aml, int.meta$ID)] <- "AML"
+  int.meta$Condition[match(samples.npm1, int.meta$ID)] <- "NPM1"
+  int.meta$Condition[match(samples.tet2, int.meta$ID)] <- "TET2"
+  int.meta$Condition[match(samples.tet2_npm1, int.meta$ID)] <- "TET2_NPM1"
+
+  rws <- seq(1, (nrow(int.meta)), by = 2)
+  col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+  print(xtable(int.meta, caption = "Available data for integrative analyses", align = c("l", "l", "c", "c", "c", "c", "c"), display = c("s", "s", "d", "d", "d", "d", "d"),  label="tab:int"), caption.placement = "bottom",
+   size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H",
+  booktabs = TRUE,
+  add.to.row = list(pos = as.list(rws), command = col))
+
+  rm(rws, col, samples.id)
+
+
+@
+
+<<fig-integrative-pca, echo=F, fig.height=16, fig.width=12>>=
+
+  plot.epic_pca12 <- plot.epic_pca12 + ggtitle("EPIC")+mytheme
+  plot.chipseq_pca12 <- plot.chipseq_pca12 + ggtitle("ChIP-seq")+mytheme
+  plot.rnaseq_pca12 <- plot.rnaseq_pca12 + ggtitle("RNA-seq")+mytheme
+
+  plot.epic_de_pca12 <- plot.epic_de_pca12 + ggtitle("EPIC (DMP)")+mytheme
+  plot.chipseq_de_pca12 <- plot.diffBind_pca12 + ggtitle("ChIP-seq (diffBind)")+mytheme
+  plot.rnaseq_de_pca12 <- plot.rnaseq_de_pca12 + ggtitle("RNA-seq (DE)")+mytheme
+
+  multiplot(plot.epic_pca12, plot.chipseq_pca12, plot.rnaseq_pca12,
+            plot.epic_de_pca12, plot.chipseq_de_pca12, plot.rnaseq_de_pca12, cols=2)
+
+@
+
+<<int-de-summary, echo=F, results='asis'>>=
+
+  print(xtable(epic.de, display = c("s", "s", "d", "s", "d", "d", "d", "d"),
+  caption = "Summary of differential methylation (DMP) results", label="tab:dmp-ov"), caption.placement = "bottom",
+  size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+  print(xtable(chipseq.de, display = c("s", "s", "d", "s", "d", "d", "d", "d", "d", "d"),
+  caption = "Summary of differentially binding results", label="tab:diffBind-ov"), caption.placement = "bottom",
+  size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+  print(xtable(rnaseq.de, display = c("s", "s", "d", "s", "d", "d", "d", "d"),
+  caption = "Summary of differential expression results", label="tab:diffExp-ov"), caption.placement = "bottom",
+  size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+@
+
+\section{Integrative analyses: omics differential signal overlap}
+\subsection{AML vs. NBM}
+
+<<int-nbm-vs-aml-tf-meth-loci-overlap, echo=F, eval=T>>=
+
+  # Input
+  peaks.cmp <- peaks.aml
+  dmp.cmp <- dmp.aml
+
+  # Find diffBind peaks that have overlapping DMPs
+
+  # ChIP-seq
+  #chipseq.peaks
+  #chipseq.peaks_annotate
+
+  # DMPs
+  #head(epic.betaNorm)
+  #head(epic.betaNormAnnotated)
+  #head(dmp.cmp)
+
+  # DMP probes regions
+  dmp.probes <- match(rownames(dmp.cmp), rownames(epic.betaNormAnnotated))
+  dmp.probes <- epic.betaNormAnnotated[dmp.probes, 1:10]
+  dmp.probes$seqnames <- as.numeric(gsub("chr", "", dmp.probes$seqnames))
+
+  # DiffBind loci regions
+  gr <- peaks.cmp
+  diffBind.loci<- data.frame(seqnames=seqnames(gr),
+                        starts=start(gr)-1,
+                        ends=end(gr),
+                        names=c(rep(".", length(gr))),
+                        scores=c(rep(".", length(gr))),
+                        strands=strand(gr))
+  rownames(diffBind.loci) <- names(gr)
+  rm(gr)
+
+  # Occupancy matrix based on peaks
+  peaks.occupancy <- data.frame(chipseq.peaks)
+  rownames(peaks.occupancy) <- paste(peaks.occupancy$seqnames, ":", peaks.occupancy$start, "-", peaks.occupancy$end, sep="")
+
+  # Occpancy matrix based on annotated peaks
+  peaks.occupancyAnnotate <- data.frame(chipseq.peaks_annotate)
+  rownames(peaks.occupancyAnnotate) <- paste(peaks.occupancyAnnotate$geneChr, ":", peaks.occupancyAnnotate$start, "-", peaks.occupancyAnnotate$end, sep="")
+
+  # Find diffBind loci that overlapp with at least one DMP probe
+  no.DMP <- c()
+  for (i in 1:nrow(diffBind.loci))
+  {
+    idx.dmp <- which(dmp.probes$seqnames==diffBind.loci$seqnames[i] & dmp.probes$start > diffBind.loci$starts[i] & dmp.probes$start < diffBind.loci$ends[i])
+    no.DMP[i] <- length(idx.dmp)
+    #if ((i %% 1000000)==0){print (i)}
+  }
+  diffBind.lociDMP <- diffBind.loci[no.DMP!=0,]
+  rm(i, idx.dmp)
+
+  #head(diffBind.lociDMP)
+
+@
+
+<<int-nbm-vs-aml-tf-meth-loci-overlap-add-indecies, echo=F, eval=T>>=
+
+  # For each diffBind-DMP loci report (if multiple, concatenate)
+  # - seqnames, starts, ends
+  # - index to chipseq.peaks occupancy values
+  # - index to chipseq.peaks annotated regions
+  # - index to beta matrix
+  # - cg name
+  c.seqnames <- c.start <- c.end <- c()
+  c.idxOccupancy <- c.idxOccupancyAnnotated <- c.idxBeta <- c.cg <- c()
+  for (i in 1:nrow(diffBind.lociDMP))
+  {
+        idx.dmp <- which(dmp.probes$seqnames==diffBind.lociDMP$seqnames[i] & dmp.probes$start >= diffBind.lociDMP$starts[i] & dmp.probes$start <= diffBind.lociDMP$ends[i])
+
+        c.seqnames <- c(c.seqnames, rep(diffBind.lociDMP$seqnames[i], length(idx.dmp)))
+        c.start <- c(c.start, rep(diffBind.lociDMP$starts[i], length(idx.dmp)))
+        c.end <- c(c.end, rep(diffBind.lociDMP$ends[i], length(idx.dmp)))
+
+        c.idxOccupancy <- c(c.idxOccupancy, rep(as.numeric(rownames(diffBind.lociDMP)[i]), length(idx.dmp)))
+
+        tmp.match <- match(rownames(peaks.occupancy)[as.numeric(rownames(diffBind.lociDMP)[i])], rownames(peaks.occupancyAnnotate))
+        if (length(tmp.match)>0)
+        {
+          c.idxOccupancyAnnotated <- c(c.idxOccupancyAnnotated, rep(tmp.match[1], length(idx.dmp)))
+        }
+
+        #c.idxBeta <- c(c.idxBeta, )
+        c.cg <- c(c.cg, rownames(dmp.probes)[idx.dmp])
+  }
+  c.idxBeta <- match(c.cg, rownames(epic.betaNorm))
+
+  # Pointer to matrix occupancy (all peaks) and matrix beta (all probes)
+  p.diffBindDMP <- data.frame(seqnames=c.seqnames, starts=c.start, ends=c.end, loci=paste("chr", c.seqnames, ":", c.start, "-", c.end, sep=""), idxOcc=c.idxOccupancy, idxOccAnn=c.idxOccupancyAnnotated, cg=c.cg, idxCg=c.idxBeta)
+
+  rm(idx.dmp, c.seqnames, c.start, c.end, c.idxOccupancy, c.idxOccupancyAnnotated, c.idxBeta, c.cg, tmp.match)
+
+  #head(p.diffBindDMP[,1:8])
+
+@
+
+<<int-nbm-vs-aml-correlation, echo=F>>=
+  # Common samples
+  idx.common<- match(intersect(int.meta$ID[int.meta$EPIC==1], int.meta$ID[int.meta$ChIPseq==1]), int.meta$ID)
+  samples.common <- int.meta$ID[idx.common]
+  rm(idx.common)
+
+  matrix.beta <- epic.betaNorm[, match(samples.common, colnames(epic.betaNorm))]
+  matrix.occupancy <- as.matrix(peaks.occupancy[, match(samples.common, colnames(peaks.occupancy))])
+  
+  c.cor <- c()
+  c.corPvalue <- c()
+  for (i in 1:nrow(p.diffBindDMP))
+  {
+    c.cor[i] <- cor(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+    c.corTest <- cor.test(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+    c.corPvalue[i] <-c.corTest$p.value
+  }
+  
+  c.corQvalue <- p.adjust(c.corPvalue, method = "fdr")
+  p.diffBindDMP$OccMeth.cor <- c.cor
+  p.diffBindDMP$OccMeth.pval <- c.corPvalue
+  p.diffBindDMP$OccMeth.lfdr <- c.corQvalue
+
+  # Correlation significance and sign
+  idx.sign <- which(p.diffBindDMP$OccMeth.lfdr<0.1)
+  p.diffBindDMP$OccMeth.cor_sign <- 0
+  p.diffBindDMP$OccMeth.cor_sign[idx.sign] <- 1
+  p.diffBindDMP$OccMeth.cor_direction <- "Positive"
+  p.diffBindDMP$OccMeth.cor_direction[p.diffBindDMP$OccMeth.cor<0] <- "Negative"
+  
+  p.diffBindDMP$OccMeth.cor2 <- 0
+  p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Positive" & p.diffBindDMP$OccMeth.cor_sign==1] <- 1
+  p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Negative" & p.diffBindDMP$OccMeth.cor_sign==1] <- -1
+  
+  #p.diffBindDMP$OccMeth.cor2 <- 0
+  #p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Positive"] <- 1
+  #p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Negative"] <- -1
+  #p.diffBindDMP$OccMeth.cor2[!(p.diffBindDMP$OccMeth.lfdr<0.1)] <- 0
+  
+  rm(idx.sign, c.cor, c.corTest, c.corPvalue, i)
+
+  # Occupancy change (up or down)
+  tmp.idx <- match(p.diffBindDMP$idxOcc, names(peaks.cmp))
+  p.diffBindDMP$OccFC <- (-1)*peaks.cmp$Fold[tmp.idx]
+  p.diffBindDMP$OccFC.direction <- 1
+  p.diffBindDMP$OccFC.direction[p.diffBindDMP$OccFC<0] <- (-1)
+  rm(tmp.idx)
+
+  #p.diffBindDMP$regions <- paste(p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+  #p.diffBindDMPsig <- p.diffBindDMP[idx.sign,]
+
+  #head(p.diffBindDMP)
+@
+
+<<int-nbm-vs-aml-meth-tf-add-rnaseq, echo=F, eval=T>>=
+
+  # For each overlapping diffBind loci with DMP probe add distance to nearest gene and DE statistics for that gene
+  rnaseq.cmp <- rnaseq.de_aml
+  lrt.cmp <- lrt.aml
+  fc.thr=1
+  p.thr=0.05
+
+  #head(peaks.occupancyAnnotate)
+  p.diffBindDMP$distanceToTss <- peaks.occupancyAnnotate$distanceToTSS[p.diffBindDMP$idxOccAnn]
+  p.diffBindDMP$ENSEMBL <- peaks.occupancyAnnotate$ENSEMBL[p.diffBindDMP$idxOccAnn]
+  p.diffBindDMP$SYMBOL <- peaks.occupancyAnnotate$SYMBOL[p.diffBindDMP$idxOccAnn]
+  p.diffBindDMP$GENENAME <- peaks.occupancyAnnotate$GENENAME[p.diffBindDMP$idxOccAnn]
+
+  # add index to rnaseq.norm matrix
+  idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(rnaseq.norm))
+  p.diffBindDMP$exp.idx <- idx.match
+
+  # add DE information
+  idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(rnaseq.cmp))
+  p.diffBindDMP$expr.logFC <- rnaseq.cmp$logFC[idx.match]
+  p.diffBindDMP$expr.FDR <- rnaseq.cmp$FDR[idx.match]
+
+  # add DE sign and directions
+
+  de <-  decideTestsDGE(lrt.cmp, lfc=fc.thr, p.value=p.thr)
+
+  idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(de))
+  p.diffBindDMP$expr.sign <- de[idx.match,1]
+
+  rm(de, idx.match)
+
+  #head(p.diffBindDMP)
+
+@
+
+<<int-nbm-vs-aml-save-aml-vs-nbm, echo=F, eval=T>>=
+  dir.save="../../Results/3696-report-02/"
+  file.save <- paste(dir.save, "TABLE-int-AML-vs-NBM.txt", sep="")
+  write.table(p.diffBindDMP, file.save, sep="\t", quote=F)
+
+@
+
+<<int-nbm-vs-aml-group-stats, echo=F, eval=T, results='asis'>>=
+
+  # Number of loci with intersecting diffBind and DMP signal
+  # Number of loci with interesecdting diffBind and DMP signal across chromosomes
+  # Number of unique profiles (O-M correlation, O change, Expr change)
+  
+  # Number of overlapping diffBind loci with DMP
+  summary.noDMP <- data.frame(loci=summary(as.factor(no.DMP)))
+  rownames(summary.noDMP) <- paste("DMP", rownames(summary.noDMP))
+
+  print(xtable(summary.noDMP, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes", label="tab:diffBind-dmp-01"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+  
+  # Number of overlapping diffBind loci with DMP: distribution over chromosomes
+  o <- c(1:22, "X", "Y")
+  loci.summary <- table(no.DMP[no.DMP!=0], diffBind.loci$seqnames[no.DMP!=0])
+  idx.o <- match(o, colnames(loci.summary))
+  loci.summary <- loci.summary[, idx.o]
+  rownames(loci.summary) <- paste("DMP", rownames(loci.summary))
+
+  print(xtable(loci.summary, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes: distribution over chromosomes", label="tab:diffBind-dmp-02"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+
+  rm(loci.summary, o, idx.o,  summary.noDMP, no.DMP)
+  
+  # Omics profiles counts
+  int.profiles <- data.frame(OccMeth=as.factor(p.diffBindDMP$OccMeth.cor2), OccFC=as.factor(p.diffBindDMP$OccFC.direction), Expr=as.factor(p.diffBindDMP$expr.sign))
+  #dim(unique(int.profiles))
+  int.profilesU <- unique(int.profiles)
+  no.counts <- c()
+  for (i in 1:nrow(int.profilesU))
+  {
+
+    idx <- which(int.profiles[,1]==int.profilesU[i,1] & int.profiles[,2]==int.profilesU[i,2] & int.profiles[,3]==int.profilesU[i,3])
+    no.counts[i] <- length(idx)
+
+  }
+
+  int.profilesU$counts <- no.counts
+  rm(no.counts, idx)
+  
+  o <- order(int.profilesU$counts, decreasing=TRUE)
+  int.profilesOut <- int.profilesU[o,]
+  colnames(int.profilesOut) <- c("Occ-Methy-cor", "Occ FC", "Gene expr", "Profiles [#]")
+  rownames(int.profilesOut) <- paste("profile", 1:nrow(int.profilesOut))
+  
+  rws <- seq(1, (nrow(int.profilesOut)), by = 2)
+  col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+  print(xtable(int.profilesOut, caption = "Omics profiles changes", label="tab:omics-profiles-counts", align=c("r", "r", "r", "r", "r")), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H",
+        add.to.row = list(pos = as.list(rws), command = col))
+   
+   rm(o, rws, col)
+   
+  
+@
+
+<<int-nbm-vs-aml-plots, echo=F, eval=F>>=
+  dir.save <- "../../Results/3696-report-02/fig-int-aml-vs-nbm/"
+
+  # Plots for all the regions
+  idx <- match(samples.common, int.meta$ID)
+  inp.groups <- int.meta$Factor[idx]
+
+  plot.loci <- paste("chr", p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+  plot.gene <-  paste(p.diffBindDMP$SYMBOL, "@", p.diffBindDMP$ENSEMBL, sep="")
+  plot.profie <- paste("Occ-Meth:", p.diffBindDMP$OccMeth.cor2, ", Occ FC:", p.diffBindDMP$OccFC.direction, ", Expr:", p.diffBindDMP$expr.sign, sep="")
+  plot.distance <- paste("distanceToTSS:", p.diffBindDMP$distanceToTss)
+
+  for (i in 1:nrow(p.diffBindDMP))
+  {
+
+    v.occupancy <- matrix.occupancy[p.diffBindDMP$idxOcc[i],]
+    v.meth <- matrix.beta[p.diffBindDMP$idxCg[i],]
+    v.expr <- rnaseq.norm[p.diffBindDMP$exp.idx[i],]
+
+    #v.exprGroups <- rnaseq.meta$Factor
+
+    tmp.data <- data.frame(methylation=v.meth, occupancy=v.occupancy)
+    tmp.data$group <- inp.groups
+    g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])+ggtitle(plot.loci[i])
+    g2 <- ggplot(tmp.data, aes(x=methylation, y=occupancy, color=group, shape=group))+geom_point()+scale_colour_brewer(palette = "Set1")+theme(legend.title=element_blank())+theme(legend.position="top")+ggtitle(plot.profie[i])
+
+    tmp.dataExp <- data.frame(expression=v.expr, factor=rnaseq.meta$Factor, condition=rnaseq.meta$Condition)
+    g3 <- ggplot(tmp.dataExp, aes(x=factor, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.gene[i])
+    g4 <- ggplot(tmp.dataExp, aes(x=condition, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.distance[i])
+
+    plot.save <- paste(dir.save, "int-", i, ".pdf", sep="")
+    pdf(plot.save)
+    multiplot(g1+mytheme, g2+mytheme,
+              g3, g4,cols=2)
+    dev.off()
+
+  }
+
+  rm(v.occupancy, v.meth, v.expr, tmp.data, tmp.dataExp, g1, g2, g3, g4, idx, inp.groups)
+  rm(plot.loci, plot.profie, plot.gene, plot.distance)
+
+@
+
+<<int-nbm-vs-aml-example-plots, echo=F, eval=T, fig.pos="H", fig.keep="all", fig.cap=c("Example of profile 1", "Example of profile 2", "Example of profile 3"), fig.height=4, fig.width=12>>=
+
+  top.profies <- int.profilesOut[1:3,]
+  
+  idx.example <- c()
+  for (i in 1:nrow(top.profies))
+  {
+    idx.tmp <- which(int.profiles[,1]==top.profies[i,1] & int.profiles[,2]==top.profies[i,2] & int.profiles[,3]==top.profies[i,3])
+    idx.example[i] <- idx.tmp[1]
+  }
+  
+  # Plots for all the regions
+  idx <- match(samples.common, int.meta$ID)
+  inp.groups <- int.meta$Factor[idx]
+
+  plot.loci <- paste("chr", p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+  plot.gene <-  paste(p.diffBindDMP$SYMBOL, "@", p.diffBindDMP$ENSEMBL, sep="")
+  plot.profie <- paste("Occ-Meth:", p.diffBindDMP$OccMeth.cor2, ", Occ FC:", p.diffBindDMP$OccFC.direction, ", Expr:", p.diffBindDMP$expr.sign, sep="")
+  plot.distance <- paste("distanceToTSS:", p.diffBindDMP$distanceToTss)
+
+  for (i in idx.example)
+  {
+
+    v.occupancy <- matrix.occupancy[p.diffBindDMP$idxOcc[i],]
+    v.meth <- matrix.beta[p.diffBindDMP$idxCg[i],]
+    v.expr <- rnaseq.norm[p.diffBindDMP$exp.idx[i],]
+
+    tmp.data <- data.frame(methylation=v.meth, occupancy=v.occupancy)
+    tmp.data$group <- inp.groups
+    g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])+ggtitle(plot.loci[i])+geom_point(aes(color=group))+scale_colour_brewer(palette = "Set1")+labs(subtitle=plot.profie[i])
+    tmp.dataExp <- data.frame(expression=v.expr, factor=rnaseq.meta$Factor, condition=rnaseq.meta$Condition)
+    g3 <- ggplot(tmp.dataExp, aes(x=factor, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.gene[i])+labs(subtitle=plot.profie[i])
+    multiplot(g1+mytheme, g3+mytheme, cols=2)
+  }
+
+  rm(v.occupancy, v.meth, v.expr, tmp.data, tmp.dataExp, g1, g2, g3, g4, idx, inp.groups)
+  rm(plot.loci, plot.profie, plot.gene, plot.distance)
+
+  
+  
+@
+
+Complete results under \texttt{TABLE-int-AML-vs-NBM.txt}. Figures under \texttt{fig-int-aml-vs-nbm}
+
+\subsection{TET2+ vs. TET2-}
+<<int-tet2-tf-meth-loci-overlap, echo=F, eval=T>>=
+
+  # Input
+  peaks.cmp <- peaks.tet2
+  dmp.cmp <- dmp.tet2
+
+  # Find diffBind peaks that have overlapping DMPs
+
+  # ChIP-seq
+  #chipseq.peaks
+  #chipseq.peaks_annotate
+
+  # DMPs
+  #head(epic.betaNorm)
+  #head(epic.betaNormAnnotated)
+  #head(dmp.cmp)
+
+  # DMP probes regions
+  dmp.probes <- match(rownames(dmp.cmp), rownames(epic.betaNormAnnotated))
+  dmp.probes <- epic.betaNormAnnotated[dmp.probes, 1:10]
+  dmp.probes$seqnames <- as.numeric(gsub("chr", "", dmp.probes$seqnames))
+
+  # DiffBind loci regions
+  gr <- peaks.cmp
+  diffBind.loci<- data.frame(seqnames=seqnames(gr),
+                        starts=start(gr)-1,
+                        ends=end(gr),
+                        names=c(rep(".", length(gr))),
+                        scores=c(rep(".", length(gr))),
+                        strands=strand(gr))
+  rownames(diffBind.loci) <- names(gr)
+  rm(gr)
+
+  # Occupancy matrix based on peaks
+  peaks.occupancy <- data.frame(chipseq.peaks)
+  rownames(peaks.occupancy) <- paste(peaks.occupancy$seqnames, ":", peaks.occupancy$start, "-", peaks.occupancy$end, sep="")
+
+  # Occpancy matrix based on annotated peaks
+  peaks.occupancyAnnotate <- data.frame(chipseq.peaks_annotate)
+  rownames(peaks.occupancyAnnotate) <- paste(peaks.occupancyAnnotate$geneChr, ":", peaks.occupancyAnnotate$start, "-", peaks.occupancyAnnotate$end, sep="")
+
+  # Find diffBind loci that overlapp with at least one DMP probe
+  no.DMP <- c()
+  for (i in 1:nrow(diffBind.loci))
+  {
+    idx.dmp <- which(dmp.probes$seqnames==diffBind.loci$seqnames[i] & dmp.probes$start > diffBind.loci$starts[i] & dmp.probes$start < diffBind.loci$ends[i])
+    no.DMP[i] <- length(idx.dmp)
+    #if ((i %% 100)==0){print (i)}
+  }
+  diffBind.lociDMP <- diffBind.loci[no.DMP!=0,]
+  rm(i, idx.dmp)
+
+  #dim(diffBind.lociDMP)
+  #head(diffBind.lociDMP)
+
+@
+
+<<int-tet2-tf-meth-loci-overlap-add-indecies, echo=F, eval=T>>=
+
+  # For each diffBind-DMP loci report (if multiple, concatenate)
+  # - seqnames, starts, ends
+  # - index to chipseq.peaks occupancy values
+  # - index to chipseq.peaks annotated regions
+  # - index to beta matrix
+  # - cg name
+  c.seqnames <- c.start <- c.end <- c()
+  c.idxOccupancy <- c.idxOccupancyAnnotated <- c.idxBeta <- c.cg <- c()
+  for (i in 1:nrow(diffBind.lociDMP))
+  {
+        idx.dmp <- which(dmp.probes$seqnames==diffBind.lociDMP$seqnames[i] & dmp.probes$start >= diffBind.lociDMP$starts[i] & dmp.probes$start <= diffBind.lociDMP$ends[i])
+
+        c.seqnames <- c(c.seqnames, rep(diffBind.lociDMP$seqnames[i], length(idx.dmp)))
+        c.start <- c(c.start, rep(diffBind.lociDMP$starts[i], length(idx.dmp)))
+        c.end <- c(c.end, rep(diffBind.lociDMP$ends[i], length(idx.dmp)))
+
+        c.idxOccupancy <- c(c.idxOccupancy, rep(as.numeric(rownames(diffBind.lociDMP)[i]), length(idx.dmp)))
+
+        tmp.match <- match(rownames(peaks.occupancy)[as.numeric(rownames(diffBind.lociDMP)[i])], rownames(peaks.occupancyAnnotate))
+        if (length(tmp.match)>0)
+        {
+          c.idxOccupancyAnnotated <- c(c.idxOccupancyAnnotated, rep(tmp.match[1], length(idx.dmp)))
+        }
+
+        #c.idxBeta <- c(c.idxBeta, )
+        c.cg <- c(c.cg, rownames(dmp.probes)[idx.dmp])
+  }
+  c.idxBeta <- match(c.cg, rownames(epic.betaNorm))
+
+  # Pointer to matrix occupancy (all peaks) and matrix beta (all probes)
+  p.diffBindDMP <- data.frame(seqnames=c.seqnames, starts=c.start, ends=c.end, loci=paste("chr", c.seqnames, ":", c.start, "-", c.end, sep=""), idxOcc=c.idxOccupancy, idxOccAnn=c.idxOccupancyAnnotated, cg=c.cg, idxCg=c.idxBeta)
+
+  rm(idx.dmp, c.seqnames, c.start, c.end, c.idxOccupancy, c.idxOccupancyAnnotated, c.idxBeta, c.cg, tmp.match)
+
+  #head(p.diffBindDMP[,1:8])
+
+@
+
+<<int-tet2-correlation, echo=F>>=
+  # Common samples
+  
+  chipseq.tet2p=chipseq.meta$ID[chipseq.meta$TET2=="TET2+"]
+  chipseq.tet2m=chipseq.meta$ID[chipseq.meta$TET2=="TET2-"]
+  
+  epic.tet2p <- epic.meta$ID[epic.meta$TET2=="TET2+"]
+  epic.tet2m <- epic.meta$ID[epic.meta$TET2=="TET2-"]
+  
+  common.tet2p <- intersect(chipseq.tet2p, epic.tet2p)
+  common.tet2m <- intersect(chipseq.tet2m, epic.tet2m)
+  
+  samples.common <- c(common.tet2p, common.tet2m)
+  #idx.common<- match(intersect(int.meta$ID[int.meta$EPIC==1], int.meta$ID[int.meta$ChIPseq==1]), int.meta$ID)
+  #samples.common <- int.meta$ID[idx.common]
+  #rm(idx.common)
+
+  matrix.beta <- epic.betaNorm[, match(samples.common, colnames(epic.betaNorm))]
+  matrix.occupancy <- as.matrix(peaks.occupancy[, match(samples.common, colnames(peaks.occupancy))])
+  
+  c.cor <- c()
+  c.corPvalue <- c()
+  for (i in 1:nrow(p.diffBindDMP))
+  {
+    c.cor[i] <- cor(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+    c.corTest <- cor.test(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+    c.corPvalue[i] <-c.corTest$p.value
+  }
+  
+  c.corQvalue <- p.adjust(c.corPvalue, method = "fdr")
+  p.diffBindDMP$OccMeth.cor <- c.cor
+  p.diffBindDMP$OccMeth.pval <- c.corPvalue
+  p.diffBindDMP$OccMeth.lfdr <- c.corQvalue
+
+  # Correlation significance and sign
+  idx.sign <- which(p.diffBindDMP$OccMeth.lfdr<0.1)
+  p.diffBindDMP$OccMeth.cor_sign <- 0
+  p.diffBindDMP$OccMeth.cor_sign[idx.sign] <- 1
+  p.diffBindDMP$OccMeth.cor_direction <- "Positive"
+  p.diffBindDMP$OccMeth.cor_direction[p.diffBindDMP$OccMeth.cor<0] <- "Negative"
+  
+  p.diffBindDMP$OccMeth.cor2 <- 0
+  p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Positive" & p.diffBindDMP$OccMeth.cor_sign==1] <- 1
+  p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Negative" & p.diffBindDMP$OccMeth.cor_sign==1] <- -1
+  
+  #p.diffBindDMP$OccMeth.cor2[!(p.diffBindDMP$OccMeth.lfdr<0.1)] <- 0
+  rm(idx.sign, c.cor, c.corTest, c.corPvalue, i)
+
+  # Occupancy change (up or down)
+  tmp.idx <- match(p.diffBindDMP$idxOcc, names(peaks.cmp))
+  p.diffBindDMP$OccFC <- (-1)*peaks.cmp$Fold[tmp.idx]
+  p.diffBindDMP$OccFC.direction <- 1
+  p.diffBindDMP$OccFC.direction[p.diffBindDMP$OccFC<0] <- (-1)
+  rm(tmp.idx)
+
+  #p.diffBindDMP$regions <- paste(p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+  #p.diffBindDMPsig <- p.diffBindDMP[idx.sign,]
+
+  #head(p.diffBindDMP)
+@
+
+<<int-tet2-meth-tf-add-rnaseq, echo=F, eval=T>>=
+
+  # For each overlapping diffBind loci with DMP probe add distance to nearest gene and DE statistics for that gene
+  rnaseq.cmp <- rnaseq.de_tet2
+  lrt.cmp <- lrt.tet2
+  fc.thr=1
+  p.thr=0.05
+
+  #head(peaks.occupancyAnnotate)
+  p.diffBindDMP$distanceToTss <- peaks.occupancyAnnotate$distanceToTSS[p.diffBindDMP$idxOccAnn]
+  p.diffBindDMP$ENSEMBL <- peaks.occupancyAnnotate$ENSEMBL[p.diffBindDMP$idxOccAnn]
+  p.diffBindDMP$SYMBOL <- peaks.occupancyAnnotate$SYMBOL[p.diffBindDMP$idxOccAnn]
+  p.diffBindDMP$GENENAME <- peaks.occupancyAnnotate$GENENAME[p.diffBindDMP$idxOccAnn]
+
+  # add index to rnaseq.norm matrix
+  idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(rnaseq.norm))
+  p.diffBindDMP$exp.idx <- idx.match
+
+  # add DE information
+  idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(rnaseq.cmp))
+  p.diffBindDMP$expr.logFC <- rnaseq.cmp$logFC[idx.match]
+  p.diffBindDMP$expr.FDR <- rnaseq.cmp$FDR[idx.match]
+
+  # add DE sign and directions
+
+  de <-  decideTestsDGE(lrt.cmp, lfc=fc.thr, p.value=p.thr)
+
+  idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(de))
+  p.diffBindDMP$expr.sign <- de[idx.match,1]
+
+  rm(de, idx.match)
+
+  #head(p.diffBindDMP)
+
+@
+
+<<int-tet2-save, echo=F, eval=T>>=
+  dir.save="../../Results/3696-report-02/"
+  file.save <- paste(dir.save, "TABLE-int-TET2p-vs-TET2m.txt", sep="")
+  write.table(p.diffBindDMP, file.save, sep="\t", quote=F)
+
+@
+
+<<int-tet2-group-stats, echo=F, eval=T, results='asis'>>=
+
+  # Number of loci with intersecting diffBind and DMP signal
+  # Number of loci with interesecdting diffBind and DMP signal across chromosomes
+  # Number of unique profiles (O-M correlation, O change, Expr change)
+  
+  # Number of overlapping diffBind loci with DMP
+  summary.noDMP <- data.frame(loci=summary(as.factor(no.DMP)))
+  rownames(summary.noDMP) <- paste("DMP", rownames(summary.noDMP))
+
+  rws <- seq(1, (nrow(summary.noDMP)-1), by = 2)
+  col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+  print(xtable(summary.noDMP, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes", label="tab:diffBind-dmp-01"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H",
+        add.to.row = list(pos = as.list(rws), command = col))
+  
+  # Number of overlapping diffBind loci with DMP: distribution over chromosomes
+  o <- c(1:22, "X", "Y")
+  loci.summary <- table(no.DMP[no.DMP!=0], diffBind.loci$seqnames[no.DMP!=0])
+  idx.o <- match(o, colnames(loci.summary))
+  loci.summary <- loci.summary[, idx.o]
+  rownames(loci.summary) <- paste("DMP", rownames(loci.summary))
+
+  print(xtable(loci.summary, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes: distribution over chromosomes", label="tab:diffBind-dmp-02"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+
+  rm(loci.summary, o, idx.o,  summary.noDMP, no.DMP)
+  
+  # Omics profiles counts
+  int.profiles <- data.frame(OccMeth=as.factor(p.diffBindDMP$OccMeth.cor2), OccFC=as.factor(p.diffBindDMP$OccFC.direction), Expr=as.factor(p.diffBindDMP$expr.sign))
+  #dim(unique(int.profiles))
+  int.profilesU <- unique(int.profiles)
+  no.counts <- c()
+  for (i in 1:nrow(int.profilesU))
+  {
+
+    idx <- which(int.profiles[,1]==int.profilesU[i,1] & int.profiles[,2]==int.profilesU[i,2] & int.profiles[,3]==int.profilesU[i,3])
+    no.counts[i] <- length(idx)
+
+  }
+
+  int.profilesU$counts <- no.counts
+  rm(no.counts, idx)
+  
+  o <- order(int.profilesU$counts, decreasing=TRUE)
+  int.profilesOut <- int.profilesU[o,]
+  colnames(int.profilesOut) <- c("Occ-Methy-cor", "Occ FC", "Gene expr", "Profiles [#]")
+  rownames(int.profilesOut) <- paste("profile", 1:nrow(int.profilesOut))
+  
+  rws <- seq(1, (nrow(int.profilesOut)), by = 2)
+  col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+  print(xtable(int.profilesOut, caption = "Omics profiles changes", label="tab:omics-profiles-counts", align=c("r", "r", "r", "r", "r")), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H",
+        add.to.row = list(pos = as.list(rws), command = col))
+   
+   rm(o, rws, col)
+  
+@
+
+<<int-tet2-plots, echo=F, eval=F>>=
+  dir.save <- "../../Results/3696-report-02/fig-int-tet2/"
+
+  # Plots for all the regions
+  idx <- match(samples.common, int.meta$ID)
+  inp.groups <- int.meta$Condition[idx]
+
+  plot.loci <- paste("chr", p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+  plot.gene <-  paste(p.diffBindDMP$SYMBOL, "@", p.diffBindDMP$ENSEMBL, sep="")
+  plot.profie <- paste("Occ-Meth:", p.diffBindDMP$OccMeth.cor2, ", Occ FC:", p.diffBindDMP$OccFC.direction, ", Expr:", p.diffBindDMP$expr.sign, sep="")
+  plot.distance <- paste("distanceToTSS:", p.diffBindDMP$distanceToTss)
+
+  for (i in 1:nrow(p.diffBindDMP))
+  {
+
+    v.occupancy <- matrix.occupancy[p.diffBindDMP$idxOcc[i],]
+    v.meth <- matrix.beta[p.diffBindDMP$idxCg[i],]
+    v.expr <- rnaseq.norm[p.diffBindDMP$exp.idx[i],]
+
+    #v.exprGroups <- rnaseq.meta$Factor
+
+    tmp.data <- data.frame(methylation=v.meth, occupancy=v.occupancy)
+    tmp.data$group <- inp.groups
+    g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])+ggtitle(plot.loci[i])
+    g2 <- ggplot(tmp.data, aes(x=methylation, y=occupancy, color=group, shape=group))+geom_point()+scale_colour_brewer(palette = "Set1")+theme(legend.title=element_blank())+theme(legend.position="top")+ggtitle(plot.profie[i])
+
+    tmp.dataExp <- data.frame(expression=v.expr, factor=rnaseq.meta$Factor, condition=rnaseq.meta$Condition)
+    tmp.dataExp$TET2 <- "X"
+    tmp.dataExp$TET2[tmp.dataExp$condition=="TET2"] <- "TET2p"
+    tmp.dataExp$TET2[tmp.dataExp$condition=="AML" | tmp.dataExp$condition=="NPM1"] <- "TET2m"
+    idx.del <- which(tmp.dataExp$TET2=="X")
+    g3 <- ggplot(tmp.dataExp[-idx.del,], aes(x=TET2, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.gene[i])
+    
+    g4 <- ggplot(tmp.dataExp, aes(x=condition, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.distance[i])
+
+    plot.save <- paste(dir.save, "int-", i, ".pdf", sep="")
+    pdf(plot.save)
+    multiplot(g1+mytheme, g2+mytheme,
+              g3, g4,cols=2)
+    dev.off()
+
+  }
+
+  rm(v.occupancy, v.meth, v.expr, tmp.data, tmp.dataExp, g1, g2, g3, g4, idx, inp.groups)
+  rm(plot.loci, plot.profie, plot.gene, plot.distance)
+
+@
+
+<<int-tet2-example-plots, echo=F, eval=T, fig.pos="H", fig.keep="all", fig.cap=c("Example of profile 1", "Example of profile 2", "Example of profile 3"), fig.height=4, fig.width=12>>=
+
+  top.profies <- int.profilesOut[1:3,]
+  
+  idx.example <- c()
+  for (i in 1:nrow(top.profies))
+  {
+    idx.tmp <- which(int.profiles[,1]==top.profies[i,1] & int.profiles[,2]==top.profies[i,2] & int.profiles[,3]==top.profies[i,3])
+    idx.example[i] <- idx.tmp[1]
+  }
+  
+  # Plots for all the regions
+  idx <- match(samples.common, int.meta$ID)
+  inp.groups <- int.meta$Condition[idx]
+
+  plot.loci <- paste("chr", p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+  plot.gene <-  paste(p.diffBindDMP$SYMBOL, "@", p.diffBindDMP$ENSEMBL, sep="")
+  plot.profie <- paste("Occ-Meth:", p.diffBindDMP$OccMeth.cor2, ", Occ FC:", p.diffBindDMP$OccFC.direction, ", Expr:", p.diffBindDMP$expr.sign, sep="")
+  plot.distance <- paste("distanceToTSS:", p.diffBindDMP$distanceToTss)
+
+  for (i in idx.example)
+  {
+
+    v.occupancy <- matrix.occupancy[p.diffBindDMP$idxOcc[i],]
+    v.meth <- matrix.beta[p.diffBindDMP$idxCg[i],]
+    v.expr <- rnaseq.norm[p.diffBindDMP$exp.idx[i],]
+
+    tmp.data <- data.frame(methylation=v.meth, occupancy=v.occupancy)
+    tmp.data$group <- inp.groups
+    g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])+ggtitle(plot.loci[i])+geom_point(aes(color=group))+scale_colour_brewer(palette = "Set1")+labs(subtitle=plot.profie[i])
+    
+    tmp.dataExp <- data.frame(expression=v.expr, factor=rnaseq.meta$Factor, condition=rnaseq.meta$Condition)
+    tmp.dataExp$TET2 <- "X"
+    tmp.dataExp$TET2[tmp.dataExp$condition=="TET2"] <- "TET2p"
+    tmp.dataExp$TET2[tmp.dataExp$condition=="AML" | tmp.dataExp$condition=="NPM1"] <- "TET2m"
+    idx.del <- which(tmp.dataExp$TET2=="X")
+    g3 <- ggplot(tmp.dataExp[-idx.del,], aes(x=TET2, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.gene[i])+labs(subtitle=plot.profie[i])
+    
+    multiplot(g1+mytheme, g3+mytheme, cols=2)
+  }
+
+  rm(v.occupancy, v.meth, v.expr, tmp.data, tmp.dataExp, g1, g2, g3, g4, idx, inp.groups)
+  rm(plot.loci, plot.profie, plot.gene, plot.distance)
+
+  
+  
+@
+
+Complete results under \texttt{TABLE-int-TET2p-vs-TET2m.txt}. Figures under \texttt{fig-int-tet2}
+
+\subsection{NPM1+ vs. NPM1-}
+
+<<int-nmp1-tf-meth-loci-overlap, echo=F, eval=T>>=
+
+  # Input
+  peaks.cmp <- peaks.npm1
+  dmp.cmp <- dmp.npm1
+
+  # Find diffBind peaks that have overlapping DMPs
+
+  # ChIP-seq
+  #chipseq.peaks
+  #chipseq.peaks_annotate
+
+  # DMPs
+  #head(epic.betaNorm)
+  #head(epic.betaNormAnnotated)
+  #head(dmp.cmp)
+
+  # DMP probes regions
+  dmp.probes <- match(rownames(dmp.cmp), rownames(epic.betaNormAnnotated))
+  dmp.probes <- epic.betaNormAnnotated[dmp.probes, 1:10]
+  dmp.probes$seqnames <- as.numeric(gsub("chr", "", dmp.probes$seqnames))
+
+  # DiffBind loci regions
+  gr <- peaks.cmp
+  diffBind.loci<- data.frame(seqnames=seqnames(gr),
+                        starts=start(gr)-1,
+                        ends=end(gr),
+                        names=c(rep(".", length(gr))),
+                        scores=c(rep(".", length(gr))),
+                        strands=strand(gr))
+  rownames(diffBind.loci) <- names(gr)
+  rm(gr)
+
+  # Occupancy matrix based on peaks
+  peaks.occupancy <- data.frame(chipseq.peaks)
+  rownames(peaks.occupancy) <- paste(peaks.occupancy$seqnames, ":", peaks.occupancy$start, "-", peaks.occupancy$end, sep="")
+
+  # Occpancy matrix based on annotated peaks
+  peaks.occupancyAnnotate <- data.frame(chipseq.peaks_annotate)
+  rownames(peaks.occupancyAnnotate) <- paste(peaks.occupancyAnnotate$geneChr, ":", peaks.occupancyAnnotate$start, "-", peaks.occupancyAnnotate$end, sep="")
+
+  # Find diffBind loci that overlapp with at least one DMP probe
+  no.DMP <- c()
+  for (i in 1:nrow(diffBind.loci))
+  {
+    idx.dmp <- which(dmp.probes$seqnames==diffBind.loci$seqnames[i] & dmp.probes$start > diffBind.loci$starts[i] & dmp.probes$start < diffBind.loci$ends[i])
+    no.DMP[i] <- length(idx.dmp)
+    #if ((i %% 100)==0){print (i)}
+  }
+  diffBind.lociDMP <- diffBind.loci[no.DMP!=0,]
+  rm(i, idx.dmp)
+
+  #dim(diffBind.lociDMP)
+  #head(diffBind.lociDMP)
+
+@
+
+<<int-nmp1-tf-meth-loci-overlap-add-indecies, echo=F, eval=T>>=
+
+  # For each diffBind-DMP loci report (if multiple, concatenate)
+  # - seqnames, starts, ends
+  # - index to chipseq.peaks occupancy values
+  # - index to chipseq.peaks annotated regions
+  # - index to beta matrix
+  # - cg name
+  c.seqnames <- c.start <- c.end <- c()
+  c.idxOccupancy <- c.idxOccupancyAnnotated <- c.idxBeta <- c.cg <- c()
+  for (i in 1:nrow(diffBind.lociDMP))
+  {
+        idx.dmp <- which(dmp.probes$seqnames==diffBind.lociDMP$seqnames[i] & dmp.probes$start >= diffBind.lociDMP$starts[i] & dmp.probes$start <= diffBind.lociDMP$ends[i])
+
+        c.seqnames <- c(c.seqnames, rep(diffBind.lociDMP$seqnames[i], length(idx.dmp)))
+        c.start <- c(c.start, rep(diffBind.lociDMP$starts[i], length(idx.dmp)))
+        c.end <- c(c.end, rep(diffBind.lociDMP$ends[i], length(idx.dmp)))
+
+        c.idxOccupancy <- c(c.idxOccupancy, rep(as.numeric(rownames(diffBind.lociDMP)[i]), length(idx.dmp)))
+
+        tmp.match <- match(rownames(peaks.occupancy)[as.numeric(rownames(diffBind.lociDMP)[i])], rownames(peaks.occupancyAnnotate))
+        if (length(tmp.match)>0)
+        {
+          c.idxOccupancyAnnotated <- c(c.idxOccupancyAnnotated, rep(tmp.match[1], length(idx.dmp)))
+        }
+
+        #c.idxBeta <- c(c.idxBeta, )
+        c.cg <- c(c.cg, rownames(dmp.probes)[idx.dmp])
+  }
+  c.idxBeta <- match(c.cg, rownames(epic.betaNorm))
+
+  # Pointer to matrix occupancy (all peaks) and matrix beta (all probes)
+  p.diffBindDMP <- data.frame(seqnames=c.seqnames, starts=c.start, ends=c.end, loci=paste("chr", c.seqnames, ":", c.start, "-", c.end, sep=""), idxOcc=c.idxOccupancy, idxOccAnn=c.idxOccupancyAnnotated, cg=c.cg, idxCg=c.idxBeta)
+
+  rm(idx.dmp, c.seqnames, c.start, c.end, c.idxOccupancy, c.idxOccupancyAnnotated, c.idxBeta, c.cg, tmp.match)
+
+  #head(p.diffBindDMP[,1:8])
+
+@
+
+<<int-nmp1-correlation, echo=F>>=
+  # Common samples
+  
+  chipseq.npm1p=chipseq.meta$ID[chipseq.meta$NPM1=="NPM1+"]
+  chipseq.npm1m=chipseq.meta$ID[chipseq.meta$NPM1=="NPM1-"]
+  
+  epic.npm1p <- epic.meta$ID[epic.meta$NPM1=="NPM1+"]
+  epic.npm1m <- epic.meta$ID[epic.meta$NPM1=="NPM1-"]
+  
+  common.npm1p <- intersect(chipseq.npm1p, epic.npm1p)
+  common.npm1m <- intersect(chipseq.npm1m, epic.npm1m)
+  
+  samples.common <- c(common.npm1m, common.npm1p)
+  #idx.common<- match(intersect(int.meta$ID[int.meta$EPIC==1], int.meta$ID[int.meta$ChIPseq==1]), int.meta$ID)
+  #samples.common <- int.meta$ID[idx.common]
+  #rm(idx.common)
+
+  matrix.beta <- epic.betaNorm[, match(samples.common, colnames(epic.betaNorm))]
+  matrix.occupancy <- as.matrix(peaks.occupancy[, match(samples.common, colnames(peaks.occupancy))])
+  
+  c.cor <- c()
+  c.corPvalue <- c()
+  for (i in 1:nrow(p.diffBindDMP))
+  {
+    c.cor[i] <- cor(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+    c.corTest <- cor.test(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+    c.corPvalue[i] <-c.corTest$p.value
+  }
+  
+  c.corQvalue <- p.adjust(c.corPvalue, method = "fdr")
+  p.diffBindDMP$OccMeth.cor <- c.cor
+  p.diffBindDMP$OccMeth.pval <- c.corPvalue
+  p.diffBindDMP$OccMeth.lfdr <- c.corQvalue
+
+  # Correlation significance and sign
+  idx.sign <- which(p.diffBindDMP$OccMeth.lfdr<0.1)
+  p.diffBindDMP$OccMeth.cor_sign <- 0
+  p.diffBindDMP$OccMeth.cor_sign[idx.sign] <- 1
+  p.diffBindDMP$OccMeth.cor_direction <- "Positive"
+  p.diffBindDMP$OccMeth.cor_direction[p.diffBindDMP$OccMeth.cor<0] <- "Negative"
+  
+  p.diffBindDMP$OccMeth.cor2 <- 0
+  p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Positive" & p.diffBindDMP$OccMeth.cor_sign==1] <- 1
+  p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Negative" & p.diffBindDMP$OccMeth.cor_sign==1] <- -1
+  
+  #p.diffBindDMP$OccMeth.cor2[!(p.diffBindDMP$OccMeth.lfdr<0.1)] <- 0
+  rm(idx.sign, c.cor, c.corTest, c.corPvalue, i)
+
+  # Occupancy change (up or down)
+  tmp.idx <- match(p.diffBindDMP$idxOcc, names(peaks.cmp))
+  p.diffBindDMP$OccFC <- (-1)*peaks.cmp$Fold[tmp.idx]
+  p.diffBindDMP$OccFC.direction <- 1
+  p.diffBindDMP$OccFC.direction[p.diffBindDMP$OccFC<0] <- (-1)
+  rm(tmp.idx)
+
+  #p.diffBindDMP$regions <- paste(p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+  #p.diffBindDMPsig <- p.diffBindDMP[idx.sign,]
+
+  #head(p.diffBindDMP)
+@
+
+<<int-nmp1-meth-tf-add-rnaseq, echo=F, eval=T>>=
+
+  # For each overlapping diffBind loci with DMP probe add distance to nearest gene and DE statistics for that gene
+  rnaseq.cmp <- rnaseq.de_npm1
+  lrt.cmp <- lrt.nmp1
+  fc.thr=1
+  p.thr=0.05
+
+  #head(peaks.occupancyAnnotate)
+  p.diffBindDMP$distanceToTss <- peaks.occupancyAnnotate$distanceToTSS[p.diffBindDMP$idxOccAnn]
+  p.diffBindDMP$ENSEMBL <- peaks.occupancyAnnotate$ENSEMBL[p.diffBindDMP$idxOccAnn]
+  p.diffBindDMP$SYMBOL <- peaks.occupancyAnnotate$SYMBOL[p.diffBindDMP$idxOccAnn]
+  p.diffBindDMP$GENENAME <- peaks.occupancyAnnotate$GENENAME[p.diffBindDMP$idxOccAnn]
+
+  # add index to rnaseq.norm matrix
+  idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(rnaseq.norm))
+  p.diffBindDMP$exp.idx <- idx.match
+
+  # add DE information
+  idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(rnaseq.cmp))
+  p.diffBindDMP$expr.logFC <- rnaseq.cmp$logFC[idx.match]
+  p.diffBindDMP$expr.FDR <- rnaseq.cmp$FDR[idx.match]
+
+  # add DE sign and directions
+
+  de <-  decideTestsDGE(lrt.cmp, lfc=fc.thr, p.value=p.thr)
+
+  idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(de))
+  p.diffBindDMP$expr.sign <- de[idx.match,1]
+
+  rm(de, idx.match)
+
+  #head(p.diffBindDMP)
+
+@
+
+<<int-nmp1-save, echo=F, eval=F>>=
+  dir.save="../../Results/3696-report-02/"
+  file.save <- paste(dir.save, "TABLE-int-NPM1p-vs-NPM1m.txt", sep="")
+  write.table(p.diffBindDMP, file.save, sep="\t", quote=F)
+
+@
+
+<<int-nmp1-group-stats, echo=F, eval=T, results='asis'>>=
+
+  # Number of loci with intersecting diffBind and DMP signal
+  # Number of loci with interesecdting diffBind and DMP signal across chromosomes
+  # Number of unique profiles (O-M correlation, O change, Expr change)
+  
+  # Number of overlapping diffBind loci with DMP
+  summary.noDMP <- data.frame(loci=summary(as.factor(no.DMP)))
+  rownames(summary.noDMP) <- paste("DMP", rownames(summary.noDMP))
+
+  rws <- seq(1, (nrow(summary.noDMP)-1), by = 2)
+  col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+  print(xtable(summary.noDMP, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes", label="tab:diffBind-dmp-01"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H",
+        add.to.row = list(pos = as.list(rws), command = col))
+  
+  # # Number of overlapping diffBind loci with DMP: distribution over chromosomes
+  # o <- c(1:22, "X")
+  # loci.summary <- table(no.DMP[no.DMP!=0], diffBind.loci$seqnames[no.DMP!=0])
+  # idx.o <- match(o, colnames(loci.summary))
+  # loci.summary <- loci.summary[, idx.o]
+  # rownames(loci.summary) <- paste("DMP", rownames(loci.summary))
+  # 
+  # loci.summary <- data.frame(Chr=names(loci.summary), DMP=loci.summary))
+  # 
+  # print(xtable(loci.summary, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes: distribution over chromosomes", label="tab:diffBind-dmp-02"), caption.placement = "bottom",
+  #       size="scriptsize",
+  #       include.rownames=TRUE,
+  #       rotate.colnames=FALSE,
+  #       floating=TRUE,
+  #       table.placement="H")
+  # 
+  # rm(loci.summary, o, idx.o,  summary.noDMP, no.DMP)
+  
+  # Omics profiles counts
+  int.profiles <- data.frame(OccMeth=as.factor(p.diffBindDMP$OccMeth.cor2), OccFC=as.factor(p.diffBindDMP$OccFC.direction), Expr=as.factor(p.diffBindDMP$expr.sign))
+  #dim(unique(int.profiles))
+  int.profilesU <- unique(int.profiles)
+  no.counts <- c()
+  for (i in 1:nrow(int.profilesU))
+  {
+
+    idx <- which(int.profiles[,1]==int.profilesU[i,1] & int.profiles[,2]==int.profilesU[i,2] & int.profiles[,3]==int.profilesU[i,3])
+    no.counts[i] <- length(idx)
+
+  }
+
+  int.profilesU$counts <- no.counts
+  rm(no.counts, idx)
+  
+  o <- order(int.profilesU$counts, decreasing=TRUE)
+  int.profilesOut <- int.profilesU[o,]
+  colnames(int.profilesOut) <- c("Occ-Methy-cor", "Occ FC", "Gene expr", "Profiles [#]")
+  rownames(int.profilesOut) <- paste("profile", 1:nrow(int.profilesOut))
+  
+  rws <- seq(1, (nrow(int.profilesOut)), by = 2)
+  col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+  print(xtable(int.profilesOut, caption = "Omics profiles changes", label="tab:omics-profiles-counts", align=c("r", "r", "r", "r", "r")), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H",
+        add.to.row = list(pos = as.list(rws), command = col))
+   
+   rm(o, rws, col)
+  
+@
+
+<<int-nmp1-plots, echo=F, eval=F>>=
+  dir.save <- "../../Results/3696-report-02/fig-int-nmp1/"
+
+  # Plots for all the regions
+  idx <- match(samples.common, int.meta$ID)
+  inp.groups <- int.meta$Condition[idx]
+
+  plot.loci <- paste("chr", p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+  plot.gene <-  paste(p.diffBindDMP$SYMBOL, "@", p.diffBindDMP$ENSEMBL, sep="")
+  plot.profie <- paste("Occ-Meth:", p.diffBindDMP$OccMeth.cor2, ", Occ FC:", p.diffBindDMP$OccFC.direction, ", Expr:", p.diffBindDMP$expr.sign, sep="")
+  plot.distance <- paste("distanceToTSS:", p.diffBindDMP$distanceToTss)
+
+  for (i in 1:nrow(p.diffBindDMP))
+  {
+
+    v.occupancy <- matrix.occupancy[p.diffBindDMP$idxOcc[i],]
+    v.meth <- matrix.beta[p.diffBindDMP$idxCg[i],]
+    v.expr <- rnaseq.norm[p.diffBindDMP$exp.idx[i],]
+
+    #v.exprGroups <- rnaseq.meta$Factor
+
+    tmp.data <- data.frame(methylation=v.meth, occupancy=v.occupancy)
+    tmp.data$group <- inp.groups
+    g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])+ggtitle(plot.loci[i])
+    g2 <- ggplot(tmp.data, aes(x=methylation, y=occupancy, color=group, shape=group))+geom_point()+scale_colour_brewer(palette = "Set1")+theme(legend.title=element_blank())+theme(legend.position="top")+ggtitle(plot.profie[i])
+
+    tmp.dataExp <- data.frame(expression=v.expr, factor=rnaseq.meta$Factor, condition=rnaseq.meta$Condition)
+    tmp.dataExp$NPM1 <- "X"
+    tmp.dataExp$NPM1[tmp.dataExp$condition=="NPM1"] <- "NPM1p"
+    tmp.dataExp$NPM1[tmp.dataExp$condition=="AML" | tmp.dataExp$condition=="TET2"] <- "NPM1m"
+    
+    idx.del <- which(tmp.dataExp$NPM1=="X")
+    g3 <- ggplot(tmp.dataExp[-idx.del,], aes(x=NPM1, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.gene[i])
+    g4 <- ggplot(tmp.dataExp, aes(x=condition, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.distance[i])
+
+    plot.save <- paste(dir.save, "int-", i, ".pdf", sep="")
+    pdf(plot.save)
+    multiplot(g1+mytheme, g2+mytheme,
+              g3, g4,cols=2)
+    dev.off()
+
+  }
+
+  rm(v.occupancy, v.meth, v.expr, tmp.data, tmp.dataExp, g1, g2, g3, g4, idx, inp.groups)
+  rm(plot.loci, plot.profie, plot.gene, plot.distance)
+
+@
+
+<<int-nmp1-example-plots, echo=F, eval=T, fig.pos="H", fig.keep="all", fig.cap=c("Example of profile 1", "Example of profile 2", "Example of profile 3"), fig.height=4, fig.width=12>>=
+
+  top.profies <- int.profilesOut[1:2,]
+  
+  idx.example <- c()
+  for (i in 1:nrow(top.profies))
+  {
+    idx.tmp <- which(int.profiles[,1]==top.profies[i,1] & int.profiles[,2]==top.profies[i,2] & int.profiles[,3]==top.profies[i,3])
+    idx.example[i] <- idx.tmp[1]
+  }
+  
+  # Plots for all the regions
+  idx <- match(samples.common, int.meta$ID)
+  inp.groups <- int.meta$Condition[idx]
+
+  plot.loci <- paste("chr", p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+  plot.gene <-  paste(p.diffBindDMP$SYMBOL, "@", p.diffBindDMP$ENSEMBL, sep="")
+  plot.profie <- paste("Occ-Meth:", p.diffBindDMP$OccMeth.cor2, ", Occ FC:", p.diffBindDMP$OccFC.direction, ", Expr:", p.diffBindDMP$expr.sign, sep="")
+  plot.distance <- paste("distanceToTSS:", p.diffBindDMP$distanceToTss)
+
+  for (i in idx.example)
+  {
+
+    v.occupancy <- matrix.occupancy[p.diffBindDMP$idxOcc[i],]
+    v.meth <- matrix.beta[p.diffBindDMP$idxCg[i],]
+    v.expr <- rnaseq.norm[p.diffBindDMP$exp.idx[i],]
+
+    tmp.data <- data.frame(methylation=v.meth, occupancy=v.occupancy)
+    tmp.data$group <- inp.groups
+    g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])+ggtitle(plot.loci[i])+geom_point(aes(color=group))+scale_colour_brewer(palette = "Set1")+labs(subtitle=plot.profie[i])
+    
+    
+    tmp.dataExp <- data.frame(expression=v.expr, factor=rnaseq.meta$Factor, condition=rnaseq.meta$Condition)
+    tmp.dataExp$NPM1 <- "X"
+    tmp.dataExp$NPM1[tmp.dataExp$condition=="NPM1"] <- "NPM1p"
+    tmp.dataExp$NPM1[tmp.dataExp$condition=="AML" | tmp.dataExp$condition=="TET2"] <- "NPM1m"
+    idx.del <- which(tmp.dataExp$NPM1=="X")
+    
+    g3 <- ggplot(tmp.dataExp[-idx.del,], aes(x=NPM1, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.gene[i])+labs(subtitle=plot.profie[i])
+  
+    multiplot(g1+mytheme, g3+mytheme, cols=2)
+  }
+
+  rm(v.occupancy, v.meth, v.expr, tmp.data, tmp.dataExp, g1, g2, g3, g4, idx, inp.groups)
+  rm(plot.loci, plot.profie, plot.gene, plot.distance)
+
+  
+  
+@
+
+Complete results under \texttt{TABLE-int-NPM1p-vs-NPM1m.txt}. Figures under \texttt{fig-int-npm1}
+
+\section{Integrative analyses: MCIA}
+\small
+MCIA: multiple co-inertia analysis. An exploratory data analysis method that identifies co-relationships between multiple high dimensional datasets. Based on a covariance optimization criterion, MCIA simultaneously projects several datasets into the same dimensional space, transforming diverse sets of features onto the same scale, to extract the most variant from each dataset and facilitate biological interpretation and pathway analysis.
+
+<<integrate-setup-02, echo=F>>=
+  
+  rm(list=ls())
+  
+  library(GenomicRanges)
+  library(ChIPseeker)
+  library(xtable)
+  library(edgeR)
+  library(ggplot2)
+  library(scater)
+  library(omicade4)
+
+@
+
+<<integrate-input-02, echo=F, eval=T>>=
+
+  load("../../scratch/cache/tmp-epic.RData")
+  load("../../scratch/cache/tmp-chipseq.RData")
+  load("../../scratch/cache/tmp-rnaseq.RData")
+
+  peaks.aml <- peaks.nbm
+  peaks.aml_annotated <- peaks.nbm_annotated
+
+  rm(compKEGG, data.batchAdj, de.summary, de.top, fit, inp.annotation, lrt, my.contrast, my.design, de.sign, lrt.table, lrt.top)
+  rm(pca, pca.frame, pca12.batch, pca12.batch_adj, color.gr, de, idx.remove, n.top, p.thr)
+  rm(dmp.probes, fc.thr, group.aml, group.conditions, grp, npm1, peaks.sign, samples.remove, tet2, tet2_npm1, func.entrezID)
+  rm(peaks.nbm, peaks.nbm_annotated)
+
+@
+
+<<integrative-meta-02, echo=F, results='asis', eval=T>>=
+
+  # epic.meta
+  # chipseq.meta
+  # rnaseq.meta
+
+  samples.id <- sort(unique(c(as.character(epic.meta$ID),
+                        as.character(chipseq.meta$ID),
+                        as.character(rnaseq.meta$ID))))
+
+  int.meta <- data.frame(ID=samples.id)
+  int.meta$Factor="AML"
+  int.meta$Factor[grep("^NBM", samples.id)] <- "NBM"
+
+  int.meta$Condition <- "NBM"
+  int.meta$EPIC=0
+  int.meta$ChIPseq=0
+  int.meta$RNAseq=0
+
+  int.meta$EPIC[match(epic.meta$ID, int.meta$ID)] <- 1
+  int.meta$ChIPseq[match(chipseq.meta$ID, int.meta$ID)] <- 1
+  int.meta$RNAseq[match(rnaseq.meta$ID, int.meta$ID)] <- 1
+
+  samples.aml <- c("UPN01", "UPN02", "UPN03", "UPN08", "UPN13")
+  samples.npm1 <- c("UPN09", "UPN11", "UPN20")
+  samples.tet2 <- c("UPN16", "UPN17", "UPN18", "UPN19")
+  samples.tet2_npm1 <- c("UPN14", "UPN15")
+
+  int.meta$Condition[match(samples.aml, int.meta$ID)] <- "AML"
+  int.meta$Condition[match(samples.npm1, int.meta$ID)] <- "NPM1"
+  int.meta$Condition[match(samples.tet2, int.meta$ID)] <- "TET2"
+  int.meta$Condition[match(samples.tet2_npm1, int.meta$ID)] <- "TET2_NPM1"
+
+@
+
+<<int-dataset, echo=F, eval=T>>=
+  
+  idx.common <- which(int.meta$EPIC==1 & int.meta$ChIPseq==1 & int.meta$RNAseq==1 & int.meta$Condition!="TET2_NPM1")
+  int.metaSub <- int.meta[idx.common,]
+  int.metaSub$TET2 <- "TET2p"
+  int.metaSub$TET2[int.metaSub$Condition!="TET2"] <- "TET2m"
+    
+  # EPIC
+  iepic <- epic.betaNorm[rownames(dmp.tet2), match(int.metaSub$ID, colnames(epic.betaNorm))]
+  iepic.all <- epic.betaNorm[, match(int.metaSub$ID, colnames(epic.betaNorm))]
+  
+  # RNA-seq
+  de <- decideTestsDGE(lrt.tet2, lfc=1, p.value=0.05)
+  de <- rownames(de)[which(de!=0)]
+  idx.match <- match(de, rownames(rnaseq.norm))
+  irnaseq <- rnaseq.norm[idx.match, match(int.metaSub$ID, colnames(rnaseq.norm))]
+  irnaseq.all <- rnaseq.norm[, match(int.metaSub$ID, colnames(rnaseq.norm))]
+  
+  # ChIP-seq
+  #peaks.tet2
+  ichipseq <- data.frame(chipseq.peaks[names(peaks.tet2),])
+  rownames(ichipseq) <- paste(ichipseq$seqnames, ":", ichipseq$start, "-", ichipseq$end, sep="")
+  ichipseq <- ichipseq[, match(int.metaSub$ID, colnames(ichipseq))]
+  ichipseq <- as.matrix(ichipseq)
+  
+  ichipseq.all <- data.frame(chipseq.peaks[names(chipseq.peaks),])
+  rownames(ichipseq.all) <- paste(ichipseq.all$seqnames, ":", ichipseq.all$start, "-", ichipseq.all$end, sep="")
+  ichipseq.all <- ichipseq.all[, match(int.metaSub$ID, colnames(ichipseq.all))]
+  ichipseq.all <- as.matrix(ichipseq.all)
+  
+  iepic.scaled <- scale(iepic)
+  ichipseq.scaled <- scale(ichipseq)
+  irnaseq.scaled <- scale(irnaseq)
+  
+  # Top IQR datasets
+  n.top <- 1000
+  iqr.data <- rowIQRs(irnaseq.all)
+  iqr.o <- order(iqr.data, decreasing = TRUE)
+  irnaseq.iqr <- scale(irnaseq.all[iqr.o[1:n.top],])
+  
+  iqr.data <- rowIQRs(iepic.all)
+  iqr.o <- order(iqr.data, decreasing = TRUE)
+  iepic.iqr <- scale(iepic.all[iqr.o[1:n.top],])
+  
+  iqr.data <- rowIQRs(ichipseq.all)
+  iqr.o <- order(iqr.data, decreasing = TRUE)
+  ichipseq.iqr <- scale(ichipseq.all[iqr.o[1:n.top],])
+  
+  rm(iqr.o)
+  
+@
+
+<<mcia, echo=F, eval=T>>=
+
+  int.list <- list(epic=iepic, chipseq=ichipseq, rnaseq=irnaseq)
+  int.listScaled <- list(epic=iepic.scaled, chipseq=ichipseq.scaled, rnaseq=irnaseq.scaled)
+  int.listIQR <- list(epic=iepic.iqr, chipseq=ichipseq.iqr, rnaseq=irnaseq.iqr)
+  
+  # graphics.off()
+  # layout(matrix(1:4, 1, 4))
+  # par(mar=c(2, 1, 0.1, 6))
+  # for (df in int.list) {
+  #   d <- dist(t(df))
+  #   hcl <- hclust(d)
+  #   dend <- as.dendrogram(hcl)
+  #   plot(dend, horiz=TRUE)
+  #   }
+  
+  int.mcia <- mcia(int.list, cia.nf=10)
+  int.mciaScaled <- mcia(int.listScaled, cia.nf=10)
+  int.mciaIQR <- mcia(int.listIQR, cia.nf=10)
+  #class(int.mcia)
+@  
+ 
+<<mcia-plot, echo=F, fig.cap="MCIA plot: based on differential omics datasets", fig.height=6, fig.width=6, eval=T, fig.pos="H">>=
+
+  #plot(int.mcia,  phenovec=int.metaSub$Condition)
+  plot(int.mciaScaled,  phenovec=int.metaSub$Condition)
+  #plot(int.mciaIQR,  phenovec=int.metaSub$Condition)
+@
+
+
+<<mcia-results, echo=F, results='asis'>>=
+  
+  #plotVar(int.mciaScaled)
+  
+  # Dataset correlation
+  print(xtable(round(int.mciaScaled$mcoa$RV, 3), caption = "Omics datasets correlation", label="tab:mcia-cor"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+  
+  # Top variables
+  # topVar(int.mcia2, axis = 1, end = "neg", topN = 10)
+  print(xtable(topVar(int.mciaScaled, axis = 1, end = "neg", topN = 10), caption = "Top variables 1 neg", label="tab:mcia-topVar-1n"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+  
+    print(xtable(topVar(int.mciaScaled, axis = 1, end = "pos", topN = 10), caption = "Top variables 1 pos", label="tab:mcia-topVar-1p"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+  
+    
+     print(xtable(topVar(int.mciaScaled, axis = 2, end = "neg", topN = 10), caption = "Top variables 2 neg", label="tab:mcia-topVar-2n"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+  
+    print(xtable(topVar(int.mciaScaled, axis = 2, end = "pos", topN = 10), caption = "Top variables 2 pos", label="tab:mcia-topVar-2p"), caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=TRUE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+  
+  
+  
+  # topVar(int.mcia3, axis = 1, end = "neg", topN = 10)
+  #kplot(int.mciaScaled$mcoa)
+
+@
+
+<<eval=F, echo=F>>=
+    
+    nci60_mod <- NCI60_4arrays
+    head(nci60_mod[[4]])
+    rownames(nci60_mod$hgu95) <- paste(rownames(nci60_mod$hgu95), "s1", sep="_")
+    head(nci60_mod[[4]])
+    mcoin_mod <- mcia(nci60_mod)
+    topVar(mcoin_mod)
+    
+    id <- split(rownames(mcoin_mod$mcoa$Tco), mcoin_mod$mcoa$TC$T)
+    sapply(id, function(x) head(x))
+    
+    mcoin_mod <- mcia(nci60_mod)
+    plotVar(mcoin_mod, var="GSTO2.hgu133")
+    
+    plotVar(int.mciaScaled, var=c("cg08381059.epic", "cg08381059"), var.col = "red")
+@
+
+
+
+
+<<mcia-plot-IQR, echo=F, fig.cap="MCIA plot: based on top IQR omics datasets", fig.height=6, fig.width=6, eval=T, fig.pos="H">>=
+
+  plot(int.mciaScaled,  phenovec=int.metaSub$Condition)
+
+@
+
+
+<<mofa, echo=F, eval=F>>=
+
+  library(MOFAtools)
+  MOFAobject <- createMOFAobject(int.list2)
+  MOFAobject
+  plotTilesData(MOFAobject)
+  
+  
+  DataOptions <- getDefaultDataOptions()
+  DataOptions 
+  
+  
+  ModelOptions <- getDefaultModelOptions(MOFAobject)
+  ModelOptions$numFactors <- 25
+  ModelOptions
+  
+  TrainOptions <- getDefaultTrainOptions()
+  # Automatically drop factors that explain less than 2% of variance in all omics
+  TrainOptions$DropFactorThreshold <- 0.02
+  TrainOptions$seed <- 2017
+  TrainOptions
+  
+  MOFAobject <- prepareMOFA(
+  MOFAobject, 
+  DataOptions = DataOptions,
+  ModelOptions = ModelOptions,
+  TrainOptions = TrainOptions
+  )
+  
+  MOFAobject <- runMOFA(MOFAobject)
+  
+@
+
+
+% 
+% \section{Deliverable}
+% \begin{description}
+%   \item[IGV tracks] files and IGV batch script are on Box under \newline \href{https://stockholmuniversity.box.com/s/agelw5q631qb0no017esm0iu3oxuj1fd}{https://stockholmuniversity.box.com/s/agelw5q631qb0no017esm0iu3oxuj1fd}
+% \end{description}
+
+\newpage
+\section{R session info}
+\label{sessionInfo}
+\scriptsize
+<<sessionInfo, echo=F, results='asis'>>=
+toLatex(sessionInfo(), locale = FALSE)
+@ 
+
+
+
+\newpage
+\printbibliography
+\end{document}  
+

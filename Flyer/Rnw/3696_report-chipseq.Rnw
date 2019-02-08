@@ -1,0 +1,1039 @@
+\documentclass[12pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ bottom=40mm}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{dirtree}
+\usepackage{subcaption}
+\usepackage{multicol}
+\setlength{\columnsep}{1cm}
+\usepackage[backend=bibtex, sorting=none, style=chicago-authordate]{biblatex}
+\setlength\bibitemsep{\baselineskip}
+%\usepackage[none]{hyphenat}
+\usepackage[british]{babel}
+\usepackage[export]{adjustbox}
+\addbibresource{/Users/olga/Documents/NBIS/References/ChIP-seq3.bib}
+
+\hypersetup{%
+  colorlinks=true,% hyperlinks will be coloured
+  linkcolor=blue,% hyperlink text will be green
+}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+%\graphicspath{ {/Users/olga/Documents/BILS/!PROJECTS/2616_zebrafish_mut/Documentation/Images/} }
+
+%% LOGOS
+\usepackage{fancyhdr}
+%\setlength{\headheight}{1.5cm}
+\addtolength{\headheight}{2cm} % make more space for the header
+\pagestyle{fancyplain} % use fancy for all pages except chapter start
+\lhead{\includegraphics[height=1.3cm, width=2cm]{Logos/NBIS-logo.png}} % left logo
+\rhead{\includegraphics[height=1.3cm, width=4cm]{Logos/SciLifeLab-logo.jpg}} % right logo
+\renewcommand{\headrulewidth}{0pt} % remove rule below header
+
+%% DEFINE TOOLS AND VARIABLES
+\newcommand{\staff}{Olga Dethlefsen}
+\newcommand{\staffWeb}{https://nbis.se/about/staff/olga-dethlefsen/}
+\newcommand{\affilations}{National Bioinformatics Infrastructure Sweden, Science for Life Laboratory, Stockholm University}
+\newcommand{\supportWeb}{http://nbis.se/support/support.html}
+\newcommand{\uppmaxWeb}{http://uppmax.uu.se/support-sv/faq/general-miscellaneous-faq/acknowledging-uppmax--snic--and-uppnex}
+\newcommand{\noIssue}{\#3696}
+\newcommand{\noUppmax}{/b2017080}
+\newcommand{\refGenome}{\texttt{GRCh38}}
+
+
+\newcommand{\fastqc}{\texttt{FastQC/0.11.5}}
+\newcommand{\trimmomatic}{\texttt{trimmomatic/0.36}}
+\renewcommand{\bowtie}{\texttt{bowtie/1.1.2}}
+\newcommand{\deepTools}{\texttt{deepTools/1.1.2}}
+\newcommand{\MACS}{\texttt{MACS/2.1.0}}
+\newcommand{\picard}{\texttt{picard/2.0.1}}
+\newcommand{\samtools}{\texttt{samtools/1.4}}
+\newcommand{\NGSUtils}{\texttt{NGSUtils/0.5.9}}
+\newcommand{\BEDOPS}{\texttt{BEDOPS/2.4.28}}
+\newcommand{\phantompeakqualtools}{\texttt{phantompeakqualtools/1.1}}
+\newcommand{\blackListed}{\texttt{https://www.encodeproject.org/annotations/ENCSR636HFF/}}
+\newcommand{\sratools}{\texttt{sratools/2.8.0}}
+\newcommand{\bedtools}{\texttt{BEDTools/2.26.0}}
+\newcommand{\Fseq}{\texttt{F-seq/1.85}}
+\newcommand{\MultiQC}{\texttt{MultiQC/1.0}}
+\newcommand{\DiffBind}{\texttt{DiffBind\_2.2.12}}
+\newcommand{\ChIPpeakAnno}{\texttt{ChIPpeakAnno\_3.8.9}}
+
+%% BEGIN DOCUMENT
+%\date{}
+\begin{document}
+
+%% TITLE PAGE
+\title{The role of CTCF binding in acute myeloid leukemia}
+\author{}
+\maketitle
+\thispagestyle{fancy}
+
+\vspace{2cm}
+\begin{center}
+\begin{tabular}{l r}
+Issue number: & {\noIssue} \\
+Request by: &  Huthayfa Mujahed\textless huthayf.mujahed@ki.se\textgreater\\ 
+Principal Investigator: &  Soren Lehmann\\
+Organisation: & Karolinska Institutet \\
+NBIS staff: & \staff
+\end{tabular}
+\end{center}
+
+%% TABLE OF CONTENTS
+\newpage
+\tableofcontents
+
+<<knitr, echo=FALSE>>=
+knitr::opts_chunk$set(echo = TRUE,
+size="scriptsize", 
+warning = FALSE, 
+message = FALSE,
+error = TRUE, 
+cache=TRUE,
+cache.path = "../../scratch/cache/3696-report-chipseq/",
+fig.path = "3696-report-chipseq-figures/"
+)
+@
+
+%% SUPPORT REQUEST
+\newpage
+\small
+\section{Support request}
+\label{session:support}
+The CCCTC-binding factor (CTCF) was classically identified as architectural protein that functions as an insulator. Recent research shows that CTCF has multi-diverse functions which vary from gene repression to chromatin organization. Some interactions can facilitate enhancer recruitment which initiates gene expression. Also, it was recently shown that CTCF binding was directing almost all looping and other intra chromosomal interactions in normal hematopoetic cells , likely regulating major gene expression patterns. We believe the aberrant methylation of DNA and potentially other aberrant epigenetic factors in AML patients will influence the interaction of CTCF with chromatin and as a consequence it will affect chromatin organization and gene expression. AML patients with TET2 mutations present with an aberrant DNA methylation pattern that potentially can change CTCF binding. Importantly, everything that changes CTCF binding may have profound effects on gene expression and consequently on leukemogenesis. 
+
+Our aims are 
+\begin{enumerate}
+  \item To examine how CTCF binding patterns changes in AML compared to normal hematopoetic cells
+  \item To investigate the specific CTCF binding pattern in AML with in respect to different geneic mutations
+  \item To define the relation between DNA methylation and CTCF binding in normal and leukemic cells
+  \item To investigate if aberrant DNA methylation interrupts CTCF binding in AML
+  \item To investigate how an aberrant CTCF binding pattern effects intrachromosomal looping and gene expression patterns
+\end{enumerate} 
+ 
+ChIP-Seq libraries were prepared from chromatin extract of CTCF pulldown experiment, and already sequenced. A cohort of 15 patients with normal karyotype and different point mutations were selected. From healthy donors are the controls for this project, as normal controls, we used bone marrow CD34+ cells from 6 healthy age matched donors. The basic data analysis is been done on uppmax server using homer software. We are in need of a ChIP-Seq bioinformatics expert that can help with downstream analysis and integration of the data.
+
+%% WORK LOG SECTION
+\scriptsize
+\section{Work log}
+A brief project history containing key points
+\begin{description}
+\item[2017-02-15] meeting with S\"oren and Huthayfa to discuss help needed
+\begin{itemize}
+\item The group has access to the variety of data, including ChiP-seq for AML with different mutations (e.g. TET2, NPM1) and healthy controls. The study originates from a bigger DNA-methylation study. Other available data types  include RNA-seq data, DNA-methylation (Infinium MethylationEPIC Kit?), mutation. More types are thought to be collected, e.g. Hi-C. The challenge is to integrate all the data and information to answer interesting biological questions e.g. as outlined in \ref{session:support} \nameref{session:support}
+\item We have agreed on the initial 40h supervision and hands-on contract. We will start with looking at the ChiP-seq data, to double-check the pipeline and plan the data analyses. Mostly to compare AML with healthy controls, also taking into account the mutation information.
+\end{itemize}
+\item[2017-02-22] meeting with Huthayfa to discuss data processing and analyses done. To do:
+\begin{itemize}
+  \item open Uppnex project on Milou (HM)
+  \item sample sheet file with filename.fasta.gz, batch number, resquencing (Yes/No), patients id (HM)
+  \item transfer files to Milou from Tintin (HM, OD)
+  \item start processing data using NBIS best practices (OD)
+  \item think about how to handle re-sequenced libraries performed for some of the samples (OD)
+\end{itemize}
+\item[2017-03-15] meeting with Huthayfa to discuss progress. OD to run the standard data processing for ChIP-seq data. HM to collect sample information in one file and start going through Agata's ChIP-seq tutorial.
+\item[2017-05-31] meeting with Huthayfa to discuss progress with ChIP-seq data processing. Most of the peak-independent quality metrics are completed.
+\begin{itemize}
+  \item ALG2011\_10 (ChIP failed), ALG2012\_14\_TGCGATC\_L008 (ChIP failed), to be excluded from further analyses after QC steps
+  \item S1 to S11 samples were initially prepared ChIP and Input with not enough reads sequenced. The ones with peaks detected will be flagged but included in further analyses (S1, S3, S11). The rest will be not included (S5, S7, S9).
+  \item ZM64F normal sample has only ca. 17M reads after merging the two sequencing runs. Most likely there is another version of the .fastq files
+  \end{itemize}
+To do
+\begin{itemize}
+  \item trouble-shoot ZM64F .fastq files (find it, re-merge it, re-run analyses)(OD, HM)
+  \item finish all standard QC steps (prior and post-peak calling) (OD)
+  \item prepare running, short yet informative sample names for plots and publication purposes, add them to the final metadata (HM)
+  \item updating meta file with other experimental data available (HM)
+  \item overview plots, e.g. PCA with deepTools (OD)
+  \item differential binding sites between normal and patients (OD)
+\end{itemize}
+Other comments
+\begin{itemize}
+  \item merging re-sequenced .fastq files before vs. after mapping? We have merged .fastq files but could be worth looking into differences, if any, at merging mapped .BAM files
+  \item down-sampling of .fastq files to create more homogenous dataset. Currently, there are some difference in the number of reads sequenced across libraries. This is normally accounted for with various normalization methods. But may be worth thinking about it
+\end{itemize}
+\item[2017-08-10] Second round of QCs as well as clean dataset for further analyses are ready. Report sent to the group.
+\item[2017-10-11] Meeting with Huthayfa to discuss initifal differential binding results. To do
+\begin{enumerate}
+  \item change UPN10 from TET2 to TET2 and NPM1 (OD)
+  \item change UPN13 from TET2 to AML no mutations (OD)
+  \item re-run comparision AML no mutations vs. TET2, NMP1 (OD)
+  \item run comparions NBM vs. TET2, NMP1 (OD)
+  \item send DNA-methylation data and organise RNA-seq data (raw counts) matching ChIP-seq data (HM).
+  \item look for relevant papers (HM).
+  \item include in the report location of scipts on Uppmax (OD)
+  \item discuss data integration at the up-coming ChIP-seq course (OD, HM plus course teachers)
+  \item send out email regaring computer resources in 2018 (OD)
+\end{enumerate}
+\end{description}
+
+\small
+\section{Important practical information}
+\subsection{Data responsibility}
+Unfortunately, we do not have resources to keep any files associated with the support request. We kindly suggest that you store safely the results delivered by us. In addition, we kindly ask that you remove the files from UPPMAX/UPPNEX. The main storage at UPPNEX is optimized for high-speed and parallel access, which makes it expensive and not the right place for longer time archiving. Please consider others by not taking up the expensive space.
+
+%One option of storing the data is via \href{https://www.snic.se/apply-for-resources/instructions-for-swestore-allocations}{Swestore}, a robust, flexible and expandable system aimed at storing large amounts of data produced by various Swedish research projects.
+\subsection{Acknowledgments}
+If you are presenting the results in a paper, at a workshop or conference, we kindly ask you to acknowledge us.
+\begin{description}
+\item[NBIS staff] are encouraged to be co-authors when this is merited in accordance to the ethical recommendations for authorship, e.g. {\href{http://www.icmje.org/recommendations/}{ICMJE recommendations}}. If applicable, please include {\href{\staffWeb}{{\staff}, \affilations}} as co-author. In other cases, NBIS would be grateful if support by us is acknowledged in publications according to this example: \href{https://bils.se/resources/support.html}{"Support by NBIS (National Bioinformatics Infrastructure Sweden) is gratefully acknowledged."}
+\item[Uppmax] kindly asks you to acknowledge UPPMAX and SNIC. If applicable, please add: {\href{\uppmaxWeb}{The computations were performed on resources provided by SNIC through Uppsala Multidisciplinary Center for Advanced Computational Science (UPPMAX) under Project {\noUppmax}.}}
+% \item[Mosler] if applicable, according to the resource user agreement for the Mosler system for sensitive data, please acknowledge Mosler by adding \href{https://nbis.se/infrastructure/mosler.html}{Support by NBIS (National Bioinformatics Infrastructure Sweden) for the use of the Mosler system for sensitive data is gratefully acknowledged}
+\end{description}
+\small
+
+%% MATERIALS AND METHODS SECTION
+\footnotesize
+%\normalsize
+\section{Materials and Methods}
+\subsection{Available data}
+Data were uploaded to to Uppnex {\noUppmax} by Huthayfa. Samples were sequenced on HiSeq 2500 with 1 x 50 bp setup using HiSeq Rapid SBS Kit v2 chemistry. The quality scale used is Sanger / phred33 / Illumina 1.8+. 3. ChIP-seq human samples with a matching input were sequenced as shown in the Table \ref{tab:metadata}.
+<<Data, echo=F, results='asis'>>=
+ dir.files <- "../../DATA/Meta/"
+ inp.meta <- "../../DATA/Meta/Sample_info_20170515.txt"
+
+ library(xtable)
+ m.meta <- read.delim(inp.meta)
+ m.meta[,2] <- gsub("_R1_001.fastq.gz", "", m.meta[,2])
+  print(xtable(m.meta[,c(-1, -9)], caption = "Libraries uploaded to Uppnex project b2017080", align = c("l", "l", "c", "c", "c", "c", "c", "c"), label="tab:metadata"),       caption.placement = "bottom",
+   size="tiny",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+@
+
+\subsection{Methods}
+\label{Methods}
+\footnotesize
+\subsubsection{Data processing}
+\begin{itemize}
+ \item {\fastqc} [\cite{Andrews2010}] was used to check the quality on raw sequencing reads for each .fastq.gz file
+ \item {\trimmomatic} [\cite{Breese2013}] was used to cut TrueSeq3-SE adapters and Illumina-specific sequences from the reads, to remove leading/trailing low quality below quality of 20 (LEADING:20, TRAILING:20), to scan reads with a 4-base wide sliding window, cutting them out when the average quality per base dropped below 18 (SLIDINGWINDOW:4:18), and to drop reads below 36 bases long (MINLEN:36)
+ \item {\fastqc} was used again to re-assess quality control after removing adapter and processing reads with {\trimmomatic}
+ \item Reads alignment was done against reference {\refGenome} genome with {\bowtie} [\cite{Langmead2011}] suppressing all multiple alignments
+ \item {\samtools} [\cite{Li2009}] was used to convert the aligned reads in .SAM format to .BAM format as well as to sort and index the .BAM files
+ \item {\phantompeakqualtools} was used to calculate the standard cross-correlation metrics and create plots on the .BAM files
+ \item {\picard} [\cite{BroadInstitute}] was run to remove the duplicated reads and {\NGSUtils} [\cite{Breese2013}] was used to remove the the regions overlapping with the blacklisted genomic regions with artificially high signals as downloaded from {\blackListed}. Processed .BAM files were re-sorted and re-indexed with {\samtools}.
+  \item {\MultiQC} was run to prepare a combine QC report based on the {\fastqc}, {\trimmomatic} and {\bowtie} log files
+ \item {\phantompeakqualtools} [\cite{Phantompeakqualtools}] was used again to re-calculate the standard cross-correlation metrics and plots after removal of the duplicated reads and blacklisted genomic regions
+ \item {\deepTools} [\cite{Ramirez2014}] was run to obtain coverage .bigWig tracks, calculated as the number of reads per bin (5 bp) and normalized to 1 x sequencing depth using estimated effective genome size of 2.45e9. In addition, {\Fseq} in addition was used to generate a continuous tag sequence density estimation (.wig) [\cite{Boyle2008}]
+ \item {\deepTools} [\cite{Ramirez2014}] was also run to prepare ChIP-seq cumulative enrichment plots and to assess overall similarity between libraries using Pearson and Spearman correlation based heatmaps and Principal Component Analysis (5000 bp)
+ \item peaks were called with {\MACS} [\cite{Badala2008}] and a combined list of peaks was obtained with {\BEDOPS} [\cite{Neph2012}]
+ \item similarity between libraries using the called peaks regions was assessed with {\deepTools} with Spearman correlation based heatmaps and Principal Component Analysis
+ \end{itemize}
+
+\subsubsection{Differential binding analysis and downstream analysis}
+\begin{itemize}
+\item Differential binding {\DiffBind} R Bioconductor package was used to run differential binding analysis. In particular, peaks identified with {\MACS} were processed to identify sites present in at least two peaksets. Sequencing reads overlapping peaks intervals were counted and used for statistically differentially bound sites based on evidence of binding affinity (measured by differences in read densities) and via DESeq2 statistical methods.
+\item {\ChIPpeakAnno} was used for down-stream analysis of peaks, i.e. annotations, visualizations binding site distribution relative to features and obtaining enriched pathways.
+\end{itemize}
+
+
+\section{Results}
+\small
+\subsection{Data processing incl. quality control}
+\subsubsection{Final dataset}
+Libraries were processed as described in \nameref{Methods} \ref{Methods} (details in the report from 2017-05-31). Some of the libraries were excluded given sequencing results and various quality control metrics. The data processing was then repeated to prepare a clean dataset including libraries as in Table \ref{tab:Dataset}
+<<Dataset, echo=F, results='asis'>>=
+  file.meta <- "../../DATA/Meta/metaData_20170801_4U.txt"
+  data.meta <- read.delim(file.meta)
+  data.meta <- data.meta[, -c(3,8,9)]
+
+  print(xtable(data.meta, align = c("l", "r", "r", "r", "r", "r", "r"), display=c("s", "s", "s", "s", "s", "s", "s"),
+      caption = "Libraries included in the analyses after intial QCs", label="tab:Dataset"),
+      caption.placement = "bottom",
+      size="tiny",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H",
+      type = "latex", format.args=list(big.mark = " "))
+
+@
+
+
+\subsubsection{Reads QCs}
+{\MultiQC} interactive report with summary statistics from {\fastqc}, {\trimmomatic} and {\bowtie} can be found in the \verb|Results| folder attached to this report. Table \ref{tab:QC} contains key summary statistics for the reads processing.
+
+<<QC1, echo=F, warning=F, results='asis'>>=
+  library(xtable)
+  file.trim <- "../../Uppmax/MultiQC/multiqc_data/multiqc_trimmomatic.txt"
+  file.bowtie <- "../../Uppmax/MultiQC/multiqc_data/multiqc_bowtie1.txt"
+  file.BAMstats <- "../../Uppmax/BAMs/Stats/Out/BAMstats.txt"
+
+  data.trim <- read.delim(file.trim)
+  data.BAMstats <- read.delim(file.BAMstats, header=F)
+  data.bowtie <- read.delim(file.bowtie)
+
+  # idx.tmp <- grep("ALG2012_24_In_TAAGTTC_L005_R1_001", data.trim[,1])
+  # data.trim <- data.trim[-idx.tmp, ]
+  # data.BAMstats <- data.BAMstats[-idx.tmp,]
+
+  table.QC <- cbind(data.trim[,c(1, 2, 3)], data.bowtie[, c(8)], data.BAMstats[,2], data.BAMstats[,2]*100/data.trim[,2])
+  colnames(table.QC) <- c("Library", "Reads", "Trimmomatic dropped", "Bowtie aligned", "Final reads", "Final reads %")
+
+  #table.trim <- data.trim[,c(1, 9, 6, 7, 2, 3)]
+  # colnames(table.trim) <- c("Library", "Reads", "dropped", "dropped %", "surviving", "surviving %")
+  # rownames(table.trim) <- rownames(data.trim)
+  # print(xtable(table.trim,
+  #     caption = "Summary statistics for Trimmomatic reads filtering", align = c("l", "r", "r", "r", "r", "r", "r"), display=c("s", "s", "d","d", "f","d", "f"), label="tab:trimm"),
+  #     caption.placement = "bottom",
+  #     size="footnotesize",
+  #     include.rownames=FALSE,
+  #     floating=TRUE,
+  #     table.placement="H",
+  #     type = "latex", format.args=list(big.mark = " "))
+
+  # table.bowtie <- data.bowtie[,c(1, 3, 8, 5, 2, 4)]
+  # colnames(table.bowtie) <- c("Library", "Reads processed", "Reads aligned", "Multimapped", "Multimapped %", "Not alinged %")
+
+  # print(xtable(table.bowtie, align = c("l", "r", "r", "r", "r", "r", "r"), display=c("s", "s", "d", "d", "f", "f", "f"),
+  #     caption = "Summary statistics for Bowtie reads alignment against reference genome", label="tab:bowtie"),
+  #     caption.placement = "bottom",
+  #     size="footnotesize",
+  #     include.rownames=FALSE,
+  #     floating=TRUE,
+  #     table.placement="H",
+  #     type = "latex", format.args=list(big.mark = " "))
+
+  table.QC[,1] <- gsub("_L0.*", "", table.QC[,1])
+
+  print(xtable(table.QC, align = c("l", "r", "r", "r", "r", "r", "r"), display=c("s", "s", "d", "d", "f", "d", "f"),
+      caption = "Summary reads processing statistics: initial reads, reads filtered out with Trimmomatic, aligned with Bowtie and further filtered if overlapping with known blacklisted regions", label="tab:QC"),
+      caption.placement = "bottom",
+      size="tiny",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H",
+      type = "latex", format.args=list(big.mark = " "))
+
+@
+
+\subsubsection{Strand cross-correlation}
+\footnotesize
+A very useful ChIP-seq quality metric that is independent of peak calling is strand cross-correlation. It is based on the fact that a high-quality ChIP-seq experiment produces significant clustering of enriched DNA sequence tags at locations bound by the protein of interest, and that the sequence tag density accumulates on forward and reverse strands centered around the binding site. The cross-correlation metric is computed as the Pearson's linear correlation between the Crick strand and the Watson strand, after shifting Watson by k base pairs. This typically produces two peaks when cross-correlation is plotted against the shift value: a peak of enrichment corresponding to the predominant fragment length and a peak corresponding to the read length ("phantom" peak).
+
+The normalized ratio between the fragment-length cross-correlation peak and the background cross-correlation (normalized strand coefficient, NSC) and the ratio between the fragment-length peak and the read-length peak (relative strand correlation, RSC), are strong metrics for assessing signal-to-noise ratios in a ChIP-seq experiment. High-quality ChIP-seq data sets tend to have a larger fragment-length peak compared with the read-length peak, whereas failed ones and inputs have little or no such peak.
+
+\begin{figure}[h!]
+\begin{center}
+\begin{subfigure}{0.40\textwidth}
+\includegraphics[width=\linewidth]{../../Uppmax/Xcor/Out/{ALBB13_011_TCCTCAA_L007_R1_001_merged.xcor}.pdf}
+\end{subfigure}\hskip 2em
+\begin{subfigure}{0.40\textwidth}
+\includegraphics[width=\linewidth]{../../Uppmax/Xcor/Out/{ALBB13_011_In_TCCAGTC_L007_R1_001.xcor}.pdf}
+\end{subfigure}
+\label{fig:xcor}
+\end{center}
+\caption{Strand cross-correlation profile for a selected ChIP (right) and a corresponding input (left). Plots for all the libraries are under \texttt{/proj/b2017080/nobackup/NBIS/Xcor\_post/Out}} \label{fig:Xcor}
+\end{figure}
+
+<<xcor, echo=F, results='asis', warning=F>>=
+  # Before processing
+  dir.xcor <- "../../Uppmax/Xcor/Out/"
+  files.xcor <- dir(dir.xcor, pattern="metrics")
+  names.xcor <- gsub(".xcor.metrics.txt", "", files.xcor)
+
+  data.metrics <- read.delim(paste(dir.xcor, files.xcor[1], sep=""), header=F)
+  for (i in 2:length(files.xcor)){data.metrics <- rbind(data.metrics, read.delim(paste(dir.xcor, files.xcor[i], sep=""), header=F))}
+  rownames(data.metrics) <- names.xcor
+  data.xcor <- data.metrics[, c(3, 9:11)]
+  colnames(data.xcor) <- c("fragLength", "NSC", "RSC", "QS")
+
+  idx.input <- grep("_In_", rownames(data.xcor))
+  idx.chip <- grep("_In_", rownames(data.xcor), invert=TRUE)
+
+@
+
+
+\begin{figure}[H]
+\begin{center}
+<<plot_NSC, echo=F, fig.height=4, fig.align="center">>=
+par(mfrow=c(1,2))
+hist(data.xcor$NSC[idx.chip], n=30, col="red", main="ChIP", cex.main=0.8, xlab="NSC")
+hist(data.xcor$NSC[idx.input], n=30, col="blue", main="Input", cex.main=0.8, xlab="NSC")
+@
+\caption{Histogram of NSC values for ChiP (left) and Input samples (right). NSC: Normalized strand coefficient, is the normalized ratio between the fragment-length cross- correlation peak and the background cross- correlation. NSC values range from a minimum of 1 to larger positive numbers. 1.1 is the critical threshold. Datasets with NSC values much less than 1.1 (\textless 1.05) tend to have low signal to noise or few peaks (this could be biological e.g. a factor that truly binds only a few sites in a particular tissue type OR it could be due to poor quality). ENCODE cutoff: NSC \textgreater 1.05.}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<plot_RSC, echo=F, fig.height=4, fig.align="center">>=
+par(mfrow=c(1,2))
+hist(data.xcor$RSC[idx.chip], n=30, col="red", main="ChIP", cex.main=0.8, xlab="RSC")
+hist(data.xcor$RSC[idx.input], n=30, col="blue", main="Input", cex.main=0.8, xlab="RSC")
+@
+\caption{Histogram of RSC values for ChiP (left) and Input samples (right). RSC: Relative strand correlation is the ratio between the fragment-length peak and the read- length peak. RSC values range from 0 to larger positive values. 1 is the critical threshold. RSC values significantly lower than 1 (\textless 0.8) tend to have low signal to noise. The low scores can be due to failed and poor quality ChIP, low read sequence quality and hence lots of mismappings, shallow sequencing depth (significantly below saturation) or a combination of these. Like the NSC, datasets with few binding sites (\textless 200), which is biologically justifiable, also show low RSC scores. ENCODE cutoff: RSC \textgreater 0.8.}
+\end{center}
+\end{figure}
+
+
+\subsubsection{Cumulative enrichment}
+A cumulative enrichment (\href{http://deeptools.readthedocs.io/en/latest/content/tools/plotFingerprint.html#what-the-plots-tell-you}{fingerplot}) is obtained by plotting a profile of cumulative read coverages for each. All reads overlapping a window (bin) of the specified length are counted; these counts are sorted and the cumulative sum is finally plotted. Here, an ideal input library with perfect uniform distribution of reads along the genome (i.e. without enrichment in open chromatin etc.) and infinite sequencing coverage should generate a straight diagonal line. A very specific and strong ChIP enrichment will be on the other hand indicated by a prominent and steep rise of the cumulative sum towards the highest rank. This means that a big chunk of reads from the ChIP sample is located in few bins which corresponds to high, narrow enrichment typically seen for transcription factors.
+
+\begin{figure}[H]
+\begin{center}
+\begin{subfigure}{0.40\textwidth}
+\includegraphics[width=\linewidth]{../../Uppmax/deepTools/Out/Fingerplot/{fingerplot_UPN09_UPN09_In}.pdf}
+\end{subfigure}\hskip 2em
+\begin{subfigure}{0.40\textwidth}
+\includegraphics[width=\linewidth]{../../Uppmax/deepTools/Out/Fingerplot/{fingerplot_NBM1_NBM1_In}.pdf}
+\end{subfigure}
+\end{center}
+\caption{Fingerplot for a selected ChIP (right) and a corresponding input (left) libraries. Plots for all the libraries are under \texttt{/proj/b2017080/nobackup/NBIS/deepTools/Out/Fingerplot}} \label{fig:fingerplot}
+\end{figure}
+
+\subsubsection{BAMs similarities}
+\label{BAMsim}
+\begin{figure}[H]
+\begin{center}
+%\includegraphics[width=\linewidth]{../Uppmax/deepTools/plotFingerprint.pdf}
+\includegraphics[scale=0.6]{../../Uppmax/deepTools/Out/{plotCor_pearson_bin.pdf}}
+\caption{\href{http://deeptools.readthedocs.io/en/latest/content/tools/plotCorrelation.html}{Clustered heatmap} based on the pairwise Pearson correlation between libraries, both ChIP and Input}
+\label{fig:heatmapBAM}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height=20cm]{../../Uppmax/deepTools/Out/plotPCA_rowCnt_bin.pdf}
+\caption{\href{http://deeptools.readthedocs.io/en/latest/content/tools/plotPCA.html}{Principal Component Analysis} for the libraries, both ChIP and Input}
+\label{fig:pcaBAM}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.6]{../../Uppmax/deepTools/Out/{plotCor_pearson_bin_onlyChIP.pdf}}
+\caption{\href{http://deeptools.readthedocs.io/en/latest/content/tools/plotCorrelation.html}{Clustered heatmap} based on the pairwise Pearson correlation between libraries, ChIP only}
+\label{fig:heatmapBAM_ChIP}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height=20cm]{../../Uppmax/deepTools/Out/plotPCA_rowCnt_bin_onlyChIP.pdf}
+\caption{\href{http://deeptools.readthedocs.io/en/latest/content/tools/plotPCA.html}{Principal Component Analysis} for the libraries, ChIP only}
+\label{fig:pcaBAM_ChIP}
+\end{center}
+\end{figure}
+
+\subsubsection{Peak calling}
+<<peaks, echo=F, results='asis'>>=
+ rm(list=ls())
+ file.peaksStats <- "../../Uppmax/Macs/Out/peaksStats.txt"
+ file.meta <- "../../DATA/Meta/metaData_20170801_4U.txt"
+ data.peaksStats <- read.delim(file.peaksStats, header=F, sep="")
+ data.meta <- read.delim(file.meta)
+
+ data.peaksStats <- data.peaksStats[-nrow(data.peaksStats),]
+ names.lib <- substr(as.character(as.matrix(data.peaksStats[,2])), 1, 20)
+
+ names.samples <- c()
+ for (i in 1:length(names.lib))
+ {
+   idx <-  grep(names.lib[i], data.meta[,1])
+   names.samples[i] <- as.character(data.meta$sample_code2[idx])
+ }
+
+peaks.no <- as.numeric(as.matrix(data.peaksStats[,1]))
+peaks.stats <- data.frame(Library=names.samples, Peaks=peaks.no)
+
+print(xtable(peaks.stats, caption = "Number of peaks detected", align = c("l", "c", "c"), display=c("s", "d", "d"), label="tab:noPeaks"),
+    caption.placement = "bottom",
+       size="footnotesize",
+       include.rownames=FALSE,
+       floating=TRUE,
+       table.placement="H",
+       type = "latex", format.args=list(big.mark = " "))
+
+@
+
+
+\begin{figure}[H]
+\begin{center}
+<<plot_peaksStats, echo=F, fig.height=4, fig.align="center", warning=FALSE>>=
+o <- order(peaks.stats$Peaks, decreasing = TRUE)
+barplot(peaks.stats$Peaks[o], col="blue", names=peaks.stats$Library[o], las=2, cex.axis=0.8, cex.names=0.8)
+@
+\caption{Number of peaks detected}
+\end{center}
+\end{figure}
+
+\subsubsection{BEDs similarities}
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.6]{../../Uppmax/deepTools/Out/{plotCor_pearson_bed.pdf}}
+\caption{\href{http://deeptools.readthedocs.io/en/latest/content/tools/plotCorrelation.html}{Clustered heatmap} based on the pairwise Pearson correlation between libraries given called peaks regions, both ChIP and Input}
+\label{fig:heatmapBED}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height=20cm]{../../Uppmax/deepTools/Out/plotPCA_rowCnt_bed.pdf}
+\caption{\href{http://deeptools.readthedocs.io/en/latest/content/tools/plotPCA.html}{Principal Component Analysis} for the libraries given called peaks regions, both ChIP and Input}
+\label{fig:pcaBED}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[scale=0.6]{../../Uppmax/deepTools/Out/{plotCor_pearson_bed_onlyChIP.pdf}}
+\caption{\href{http://deeptools.readthedocs.io/en/latest/content/tools/plotCorrelation.html}{Clustered heatmap} based on the pairwise Pearson correlation between libraries given called peaks regions, ChIP only}
+\label{fig:heatmapBED_ChIP}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[height=20cm]{../../Uppmax/deepTools/Out/plotPCA_rowCnt_bed_onlyChIP.pdf}
+\caption{\href{http://deeptools.readthedocs.io/en/latest/content/tools/plotPCA.html}{Principal Component Analysis} for the libraries given called peaks regions, ChIP only}
+\label{fig:pcaBED_ChIP}
+\end{center}
+\end{figure}
+
+\subsubsection{IGV examples}
+\label{visTracks}
+Data can be visually assessed by uploading aligned reads (BAM files), coverage tracks (bigWig or wig files)  and peaks regions (BED files) to a genome browser, e.g. recommended \href{http://software.broadinstitute.org/software/igv/}{IGV} or \href{https://genome.ucsc.edu/cgi-bin/hgTracks}{UCSC}. Examples of data visualization with IGV below.
+
+\begin{figure}[H]
+\begin{center}
+\includegraphics[width=\linewidth]{../../Uppmax/IGV/ERG.png}
+\caption{Example of aligned reads (BAM) visualization together with called peaks regions centered on ERG using \href{http://software.broadinstitute.org/software/igv/}{IGV}}
+\label{fig:IGV_ERG}s
+\end{center}
+\end{figure}
+
+
+\subsection{Differential binding analysis}
+<<Rsetup_4DiffBind, echo=F, warning=F, messages=F, include=FALSE>>=
+  rm(list=ls())
+  library(edgeR, quietly = TRUE, warn.conflicts = FALSE)
+  library(ggplot2, quietly = TRUE, warn.conflicts = FALSE)
+  library(gplots, quietly = TRUE, verbose=FALSE, warn.conflicts = FALSE)
+  library(biomaRt, quietly = TRUE, warn.conflicts = FALSE)
+  library(xtable, quietly = TRUE, warn.conflicts = FALSE)
+  library(scales, quietly = TRUE, warn.conflicts = FALSE)
+  library(RColorBrewer, quietly = TRUE, warn.conflicts = FALSE)
+  library(DiffBind, quietly = TRUE, warn.conflicts = FALSE, verbose=F)
+
+  load("../../DATA/processed/RData/diffBind.RData", verbose = F)
+  dir.out <- "../../Results/3696-report-chipseq/"
+
+@
+
+
+\subsubsection{Overview}
+<<diffBind_overview, echo=F, results='asis'>>=
+
+# Libraries overview
+     print(xtable(dba.show(pctcf), caption = "Data overview incl. peaks intervals and FRiP", align = c("r", "r", "r", "r", "r", "r", "r", "r"), label="tab:DiffBind_overview"),
+       caption.placement = "bottom",
+       size="footnotesize",
+       include.rownames=FALSE,
+       floating=TRUE,
+       table.placement="H")
+      write.table(dba.show(pctcf), paste(dir.out, "TABLE_ChIP-seq-overview.txt", sep=""), sep="\t", quote=F, row.names=F)
+
+# DiffBind group comparisons overview
+    print(xtable(dba.show(pctcf, bContrasts=TRUE),
+      caption = "Number of statistically different sites for the run comparisons", align = c("r", "r", "r", "r", "r", "r"), label="tab:DiffBind_overview"),
+       caption.placement = "bottom",
+       size="footnotesize",
+       include.rownames=FALSE,
+       floating=TRUE,
+       table.placement="H")
+
+# Contrast labels
+contrasts.table <- dba.show(pctcf, bContrasts=TRUE)
+contrasts.labels <- paste(contrasts.table$Group1, contrasts.table$Group2, sep="_vs._")
+
+# Exporting peaks regions (all)
+    gr <- dba.peakset(pctcf, bRetrieve=TRUE)
+    peaks.all <- data.frame(seqnames=seqnames(gr),
+                        starts=start(gr)-1,
+                        ends=end(gr),
+                        names=c(rep(".", length(gr))),
+                        scores=c(rep(".", length(gr))),
+                        strands=strand(gr))
+    write.table(peaks.all, file=paste(dir.out, "/", "peaks_all.bed", sep=""), quote=F, sep="\t", row.names=F, col.names=F)
+    
+    write.table(pctcf$binding, file=paste(dir.out, "/", "affinity.txt", sep=""), quote=F, sep="\t", row.names=F, col.names=T)
+    
+@
+
+\begin{figure}[H]
+\begin{center}
+<<db_pca, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotPCA(pctcf, label=DBA_REPLICATE)
+@
+\caption{PCA plot using affinity data for all sites}
+\label{fig:db_pca}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+<<db_heatmap, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotHeatmap(pctcf)
+@
+\caption{Heatmap using affinity data for all sites}
+\label{fig:db_pca}
+\end{center}
+\end{figure}
+
+
+\subsubsection{AML vs. NBM}
+
+<<db1, echo=F, results='asis'>>=
+    contrastNo = 1
+
+    print(xtable(dba.show(pctcf, bContrasts=TRUE)[contrastNo,],
+      caption = "Number of statistically different sites", align = c("r", "r", "r", "r", "r", "r"), label="tab:db1"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H")
+
+    db.1 <- dba.report(pctcf, contrast = contrastNo)
+
+    no.fc <- data.frame(Group1=sum(db.1$Fold>0), Group2=sum(db.1$Fold<0))
+    print(xtable(no.fc,
+      caption = "Number of statistically different sites increased in group 1 and group 2: ", align = c("r", "r", "r"), label="tab:db1_fc"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H")
+
+# Exporting peaks regions
+    gr <- dba.report(pctcf, contrast = contrastNo)
+    peaks <- data.frame(seqnames=seqnames(gr),
+                        starts=start(gr)-1,
+                        ends=end(gr),
+                        names=c(rep(".", length(gr))),
+                        scores=c(rep(".", length(gr))),
+                        strands=strand(gr))
+    write.table(peaks, file=paste(dir.out, "/", "peaks_", contrasts.labels[contrastNo], ".bed", sep=""), quote=F, sep="\t", row.names=F, col.names=F)
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<db1_boxplot, echo=F, fig.width=6, fig.height=5>>=
+    dba.plotBox(pctcf, contrast = contrastNo)
+@
+\caption{Box plots of read distributions for significantly differentially bound (DB) sites}
+\label{fig:db1_boxplot}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+<<db1_ma, echo=F, fig.width=5, fig.height=5>>=
+    dba.plotMA(pctcf, contrast = contrastNo)
+@
+\caption{MA plot. Sites identified as significantly differentially bound (DB) shown in red}
+\label{fig:db1_ma}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<db1_pca, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotPCA(pctcf, contrast = contrastNo, label=DBA_REPLICATE)
+@
+\caption{PCA plot using only the differentially bound sites using an FDR threshold of 0.05}
+\label{fig:db1_pca}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<db1_heatmap, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotHeatmap(pctcf, contrast = contrastNo)
+@
+\caption{Correlation heatmap using affinity (read count) data}
+\label{fig:db1_heatmap}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<db1_heatmap2, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotHeatmap(pctcf, contrast = contrastNo, correlations=FALSE)
+@
+\caption{Binding affinity heatmap showing affinities for differentially bound sites}
+\label{fig:db1_heatmap2}
+\end{center}
+\end{figure}
+
+\subsubsection{AML no mutation vs. TET2, NPM1}
+<<db2, echo=F, results='asis'>>=
+    contrastNo = 2
+
+    print(xtable(dba.show(pctcf, bContrasts=TRUE)[contrastNo,],
+      caption = "Number of statistically different sites", align = c("r", "r", "r", "r", "r", "r"), label="tab:db2"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H")
+
+    db.1 <- dba.report(pctcf, contrast = contrastNo)
+
+    no.fc <- data.frame(Group1=sum(db.1$Fold>0), Group2=sum(db.1$Fold<0))
+    print(xtable(no.fc,
+      caption = "Number of statistically different sites increased in group 1 and group 2: ", align = c("r", "r", "r"), label="tab:db1_fc"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H")
+
+# Exporting peaks regions
+    gr <- dba.report(pctcf, contrast = contrastNo)
+    peaks <- data.frame(seqnames=seqnames(gr),
+                        starts=start(gr)-1,
+                        ends=end(gr),
+                        names=c(rep(".", length(gr))),
+                        scores=c(rep(".", length(gr))),
+                        strands=strand(gr))
+    write.table(peaks, file=paste(dir.out, "/", "peaks_", contrasts.labels[contrastNo], ".bed", sep=""), quote=F, sep="\t", row.names=F, col.names=F)
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<db2_boxplot, echo=F, fig.width=6, fig.height=5, warning=F>>=
+    dba.plotBox(pctcf, contrast = contrastNo)
+@
+\caption{Box plots of read distributions for significantly differentially bound (DB) sites}
+\label{fig:db2_boxplot}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+<<db2_ma, echo=F, fig.width=5, fig.height=5>>=
+    dba.plotMA(pctcf, contrast = contrastNo)
+@
+\caption{MA plot. Sites identified as significantly differentially bound (DB) shown in red}
+\label{fig:db2_ma}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<db2_pca, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotPCA(pctcf, contrast = contrastNo, label=DBA_REPLICATE)
+@
+\caption{PCA plot using only the differentially bound sites using an FDR threshold of 0.05}
+\label{fig:db2_pca}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<db2_heatmap, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotHeatmap(pctcf, contrast = contrastNo)
+@
+\caption{Correlation heatmap using affinity (read count) data}
+\label{fig:db2_heatmap}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<db2_heatmap2, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotHeatmap(pctcf, contrast = contrastNo, correlations=FALSE)
+@
+\caption{Binding affinity heatmap showing affinities for differentially bound sites}
+\label{fig:db2_heatmap2}
+\end{center}
+\end{figure}
+
+
+
+\subsubsection{NBM vs. TET2, NPM1}
+
+<<db3, echo=F, results='asis'>>=
+    contrastNo = 3
+
+    print(xtable(dba.show(pctcf, bContrasts=TRUE)[contrastNo,],
+      caption = "Number of statistically different sites", align = c("r", "r", "r", "r", "r", "r"), label="tab:db1"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H")
+
+    db.3 <- dba.report(pctcf, contrast = contrastNo)
+
+    no.fc <- data.frame(Group1=sum(db.3$Fold>0), Group2=sum(db.3$Fold<0))
+    print(xtable(no.fc,
+      caption = "Number of statistically different sites increased in group 1 and group 2: ", align = c("r", "r", "r"), label="tab:db1_fc"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H")
+
+# Exporting peaks regions
+    gr <- dba.report(pctcf, contrast = contrastNo)
+    peaks <- data.frame(seqnames=seqnames(gr),
+                        starts=start(gr)-1,
+                        ends=end(gr),
+                        names=c(rep(".", length(gr))),
+                        scores=c(rep(".", length(gr))),
+                        strands=strand(gr))
+    write.table(peaks, file=paste(dir.out, "/", "peaks_", contrasts.labels[contrastNo], ".bed", sep=""), quote=F, sep="\t", row.names=F, col.names=F)
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<db3_boxplot, echo=F, fig.width=6, fig.height=5>>=
+    dba.plotBox(pctcf, contrast = contrastNo)
+@
+\caption{Box plots of read distributions for significantly differentially bound (DB) sites}
+\label{fig:db3_boxplot}
+\end{center}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+<<db3_ma, echo=F, fig.width=5, fig.height=5>>=
+    dba.plotMA(pctcf, contrast = contrastNo)
+@
+\caption{MA plot. Sites identified as significantly differentially bound (DB) shown in red}
+\label{fig:db1_ma}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<db3_pca, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotPCA(pctcf, contrast = contrastNo, label=DBA_REPLICATE)
+@
+\caption{PCA plot using only the differentially bound sites using an FDR threshold of 0.05}
+\label{fig:db1_pca}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<db3_heatmap, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotHeatmap(pctcf, contrast = contrastNo)
+@
+\caption{Correlation heatmap using affinity (read count) data}
+\label{fig:db3_heatmap}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<db3_heatmap2, echo=F, fig.width=6, fig.height=6>>=
+    dba.plotHeatmap(pctcf, contrast = contrastNo, correlations=FALSE)
+@
+\caption{Binding affinity heatmap showing affinities for differentially bound sites}
+\label{fig:db3_heatmap2}
+\end{center}
+\end{figure}
+
+%
+\subsection{Downstream ChIP-seq peaks analysis}
+
+<<downstreamSetup, echo=F, results='asis', include=F>>=
+    rm(list=ls())
+    library(ChIPpeakAnno)
+    library(xtable)
+    load("../../DATA/processed/RData/ChIPpeakAnno.RData")
+    data(TSS.human.GRCh38)
+@
+
+\subsubsection{AML vs. NBM}
+
+<<dS1, echo=F, results='asis'>>=
+    no.contrast=1
+    #txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
+    table.features <- as.matrix(table(list.peaks[[no.contrast]]$insideFeature))
+    colnames(table.features) <- "peaks"
+
+    print(xtable(table.features,
+      caption = "The distribution of peaks around features", align = c("r", "r"), label="tab:dS1_features"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=TRUE,
+      floating=TRUE,
+      table.placement="H")
+
+    table.featuresG <- list.distr[[no.contrast]]
+    table.per <- as.matrix(table.featuresG$percentage)
+    colnames(table.per) <- "peaks [%]"
+
+    print(xtable(table.per,
+      caption = "The distribution of peaks over different type of features such as exon, intron, enhancer, proximal promoter, 5'UTR and 3'UTR", align = c("r", "r"), label="tab:dS1_per"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=TRUE,
+      floating=TRUE,
+      table.placement="H")
+@
+
+
+<<dS1_go, echo=F, results='asis'>>=
+  table.path <- list.path[[no.contrast]]
+
+  path.id <- unique(table.path$path.id)
+  idx.match <- match(path.id, table.path$path.id)
+  table.pathR <- table.path[idx.match, -c(2,6,7)]
+  o <- order(table.pathR$pvalue)
+
+  if (length(o)>20) {table.pathR <- table.pathR[o[1:20],]}else table.pathR <- table.pathR[o,]
+
+  table.pathR$PATH <- gsub("Homo sapiens:", "", table.pathR$PATH)
+
+  print(xtable(table.pathR,
+      caption = "Top enriched reactome pathways", align = c("r", "r", "r", "r", "r", "r"), label="tab:dS1_path"),
+      caption.placement = "bottom",
+      size="scriptsize",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H")
+
+@
+
+
+\subsubsection{AML no mutations vs. TET2, NPM1}
+<<dS2, echo=F, results='asis'>>=
+    no.contrast=2
+
+
+    table.features <- as.matrix(table(list.peaks[[no.contrast]]$insideFeature))
+    colnames(table.features) <- "peaks"
+
+    print(xtable(table.features,
+      caption = "The distribution of peaks around features", align = c("r", "r"), label="tab:dS2_features"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=TRUE,
+      floating=TRUE,
+      table.placement="H")
+
+    table.featuresG <- list.distr[[no.contrast]]
+    table.per <- as.matrix(table.featuresG$percentage)
+    colnames(table.per) <- "peaks [%]"
+
+    print(xtable(table.per,
+      caption = "The distribution of peaks over different type of features such as exon, intron, enhancer, proximal promoter, 5'UTR and 3'UTR", align = c("r", "r"), label="tab:dS2_per"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=TRUE,
+      floating=TRUE,
+      table.placement="H")
+@
+
+
+<<dS2_go, echo=F, results='asis'>>=
+  table.path <- list.path[[no.contrast]]
+
+  path.id <- unique(table.path$path.id)
+  idx.match <- match(path.id, table.path$path.id)
+  table.pathR <- table.path[idx.match, -c(2,6,7)]
+  o <- order(table.pathR$pvalue)
+
+  if (length(o)>20) {table.pathR <- table.pathR[o[1:20],]}else table.pathR <- table.pathR[o,]
+
+  table.pathR$PATH <- gsub("Homo sapiens:", "", table.pathR$PATH)
+
+  print(xtable(table.pathR,
+      caption = "Top enriched reactome pathways", align = c("r", "r", "r", "r", "r", "r"), label="tab:dS2_path"),
+      caption.placement = "bottom",
+      size="scriptsize",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H")
+
+@
+
+
+
+\subsubsection{NBM vs. TET2, NPM1}
+<<dS3, echo=F, results='asis'>>=
+    no.contrast=3
+
+
+    table.features <- as.matrix(table(list.peaks[[no.contrast]]$insideFeature))
+    colnames(table.features) <- "peaks"
+
+    print(xtable(table.features,
+      caption = "The distribution of peaks around features", align = c("r", "r"), label="tab:dS2_features"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=TRUE,
+      floating=TRUE,
+      table.placement="H")
+
+    table.featuresG <- list.distr[[no.contrast]]
+    table.per <- as.matrix(table.featuresG$percentage)
+    colnames(table.per) <- "peaks [%]"
+
+    print(xtable(table.per,
+      caption = "The distribution of peaks over different type of features such as exon, intron, enhancer, proximal promoter, 5'UTR and 3'UTR", align = c("r", "r"), label="tab:dS2_per"),
+      caption.placement = "bottom",
+      size="footnotesize",
+      include.rownames=TRUE,
+      floating=TRUE,
+      table.placement="H")
+@
+
+
+<<dS3_go, echo=F, results='asis'>>=
+  table.path <- list.path[[no.contrast]]
+
+  path.id <- unique(table.path$path.id)
+  idx.match <- match(path.id, table.path$path.id)
+  table.pathR <- table.path[idx.match, -c(2,6,7)]
+  o <- order(table.pathR$pvalue)
+
+  if (length(o)>20) {table.pathR <- table.pathR[o[1:20],]}else table.pathR <- table.pathR[o,]
+
+  table.pathR$PATH <- gsub("Homo sapiens:", "", table.pathR$PATH)
+
+  print(xtable(table.pathR,
+      caption = "Top enriched reactome pathways", align = c("r", "r", "r", "r", "r", "r"), label="tab:dS2_path"),
+      caption.placement = "bottom",
+      size="scriptsize",
+      include.rownames=FALSE,
+      floating=TRUE,
+      table.placement="H")
+
+@
+
+
+
+
+\newpage
+\printbibliography
+\end{document}  
+

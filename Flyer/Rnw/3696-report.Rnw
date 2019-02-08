@@ -1,0 +1,2313 @@
+\documentclass[12pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{a4paper,
+ total={170mm,257mm},
+ left=20mm,
+ top=20mm,
+ bottom=40mm}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{dirtree}
+\usepackage{subcaption}
+\usepackage{multicol}
+\setlength{\columnsep}{1cm}
+\usepackage[backend=bibtex, sorting=none, style=chicago-authordate]{biblatex}
+\setlength\bibitemsep{\baselineskip}
+%\usepackage[none]{hyphenat}
+\usepackage[british]{babel}
+\usepackage[export]{adjustbox}
+\addbibresource{References.bib}
+
+\usepackage{booktabs}
+\usepackage{colortbl, xcolor}
+
+\hypersetup{%
+  colorlinks=true,% hyperlinks will be coloured
+  linkcolor=blue,% hyperlink text will be green
+}
+\DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
+%\graphicspath{ {/Users/olga/Documents/BILS/!PROJECTS/2616_zebrafish_mut/Documentation/Images/} }
+
+%% LOGOS
+\usepackage{fancyhdr}
+\addtolength{\headheight}{2cm} % make more space for the header
+\pagestyle{fancyplain} % use fancy for all pages except chapter start
+\lhead{\includegraphics[height=1.3cm, width=2cm]{Logos/NBIS-logo.png}} % left logo
+\rhead{\includegraphics[height=1.3cm, width=4cm]{Logos/SciLifeLab-logo.jpg}} % right logo
+\renewcommand{\headrulewidth}{0pt} % remove rule below header
+
+%% DEFINE TOOLS AND VARIABLES
+\newcommand{\staff}{Olga Dethlefsen}
+\newcommand{\staffWeb}{https://nbis.se/about/staff/olga-dethlefsen/}
+\newcommand{\affilations}{National Bioinformatics Infrastructure Sweden, Science for Life Laboratory, Stockholm University}
+\newcommand{\supportWeb}{http://nbis.se/support/support.html}
+\newcommand{\uppmaxWeb}{http://uppmax.uu.se/support-sv/faq/general-miscellaneous-faq/acknowledging-uppmax--snic--and-uppnex}
+\newcommand{\noIssue}{\#3696}
+\newcommand{\noUppmax}{/b2017080}
+\newcommand{\refGenome}{\texttt{GRCh38}}
+
+\newcommand{\fastqc}{\texttt{FastQC/0.11.5}}
+\newcommand{\trimmomatic}{\texttt{trimmomatic/0.36}}
+\renewcommand{\bowtie}{\texttt{bowtie/1.1.2}}
+\newcommand{\deepTools}{\texttt{deepTools/1.1.2}}
+\newcommand{\MACS}{\texttt{MACS/2.1.0}}
+\newcommand{\picard}{\texttt{picard/2.0.1}}
+\newcommand{\samtools}{\texttt{samtools/1.4}}
+\newcommand{\NGSUtils}{\texttt{NGSUtils/0.5.9}}
+\newcommand{\BEDOPS}{\texttt{BEDOPS/2.4.28}}
+\newcommand{\phantompeakqualtools}{\texttt{phantompeakqualtools/1.1}}
+\newcommand{\blackListed}{\texttt{https://www.encodeproject.org/annotations/ENCSR636HFF/}}
+\newcommand{\sratools}{\texttt{sratools/2.8.0}}
+\newcommand{\bedtools}{\texttt{BEDTools/2.26.0}}
+\newcommand{\Fseq}{\texttt{F-seq/1.85}}
+\newcommand{\MultiQC}{\texttt{MultiQC/1.6}}
+\newcommand{\DiffBind}{\texttt{DiffBind\_2.2.12}}
+\newcommand{\ChIPpeakAnno}{\texttt{ChIPpeakAnno\_3.8.9}}
+
+\renewcommand{\star}{\texttt{star/2.5.3a"}}
+\newcommand{\featureCounts}{\texttt{featureCounts}}
+\newcommand{\subread}{\texttt{subread/1.5.2}}
+%\newcommand{\refSource}{\texttt{http://www.ensembl.org/info/data/ftp/index.html}}
+\newcommand{\refSource}{\texttt{http://www.ensembl.org/}}
+
+
+%% BEGIN DOCUMENT
+\begin{document}
+
+%% TITLE PAGE
+\title{The role of CTCF binding in acute myeloid leukemia: integrative data analysis}
+\author{}
+\maketitle
+\thispagestyle{fancy}
+
+\vspace{2cm}
+\begin{center}
+\begin{tabular}{l r}
+Issue number: & {\noIssue} \\
+Request by: &  Huthayfa Mujahed\textless huthayf.mujahed@ki.se\textgreater\\ 
+Principal Investigator: &  S\"oren Lehmann\\
+Organisation: & Karolinska Institutet \\
+NBIS staff: & \staff
+\end{tabular}
+\end{center}
+
+%% TABLE OF CONTENTS
+\newpage
+\tableofcontents
+
+<<knitr, echo=FALSE>>=
+knitr::opts_chunk$set(echo = TRUE,
+size="scriptsize", 
+warning = FALSE, 
+message = FALSE,
+error = TRUE, 
+fig.path = "3696-report-figures/",
+cache=TRUE, 
+cache.path = "../../scratch/cache/3696-report/"
+)
+@
+
+%% SUPPORT REQUEST
+\newpage
+\small
+\section{Support request}
+\label{session:support}
+\footnotesize
+\scriptsize
+The CCCTC-binding factor (CTCF) was classically identified as architectural protein that functions as an insulator. Recent research shows that CTCF has multi-diverse functions which vary from gene repression to chromatin organization. Some interactions can facilitate enhancer recruitment which initiates gene expression. Also, it was recently shown that CTCF binding was directing almost all looping and other intra chromosomal interactions in normal hematopoetic cells , likely regulating major gene expression patterns. We believe the aberrant methylation of DNA and potentially other aberrant epigenetic factors in AML patients will influence the interaction of CTCF with chromatin and as a consequence it will affect chromatin organization and gene expression. AML patients with TET2 mutations present with an aberrant DNA methylation pattern that potentially can change CTCF binding. Importantly, everything that changes CTCF binding may have profound effects on gene expression and consequently on leukemogenesis. 
+
+Our aims are 
+\begin{enumerate}
+  \item To examine how CTCF binding patterns changes in AML compared to normal hematopoetic cells
+  \item To investigate the specific CTCF binding pattern in AML with in respect to different geneic mutations
+  \item To define the relation between DNA methylation and CTCF binding in normal and leukemic cells
+  \item To investigate if aberrant DNA methylation interrupts CTCF binding in AML
+  \item To investigate how an aberrant CTCF binding pattern effects intrachromosomal looping and gene expression patterns
+\end{enumerate} 
+ 
+ChIP-Seq libraries were prepared from chromatin extract of CTCF pulldown experiment, and already sequenced. A cohort of 15 patients with normal karyotype and different point mutations were selected. From healthy donors are the controls for this project, as normal controls, we used bone marrow CD34+ cells from 6 healthy age matched donors. The basic data analysis is been done on uppmax server using homer software. We are in need of a ChIP-Seq bioinformatics expert that can help with downstream analysis and integration of the data.
+
+%% WORK LOG SECTION
+\scriptsize
+\section{Work log}
+A brief project history containing key points
+\begin{description}
+\item[2018-01-17] Meeting with Soren, Huthayfa and Sylvain to discuss data integration. Main questions to answer
+\begin{enumerate}
+  \item What is the role of DNA methylation in modulation transcription factor binding sites?
+  \item Can we understand/characterize gene regulatory by further including gene expression data?
+\end{enumerate}
+Suggested data analysis ideas:
+\begin{enumerate}
+  \item Correlation between methylation and binding sites profiles (within patient and further including also group effect AML vs. NBM)
+  \item Comparison of differentially methylated sites and differentially binding sites?
+  \item Comparison of differentially methylated sites, differentially binding sites and differentially expressed genes (e.g. 3 way Venn diagrams)
+  \item Unsupervised hypotheses free data analysis (e.g. can we find a subset of features (methylation sites, binding sites, genes) predictive of AML (i.e. different to NBM))
+\end{enumerate}
+\item[2018-05-29] Meeting with the group. To do: 
+\begin{enumerate}
+  \item run motifs 
+  \item continue with methylation and ChIP-seq data integration as in Wang paper. In principle: get methylation signal in peaks regions, correlation and correlation stratified by genomic locations, consider AML without mutations to get more homogeneous group, add mutations effects where possible. 
+  \item summary statistics within one sample, using whole array (think how). Methylation low (0 - 0.2), medium range (0.2 - 0.6), high range (0.6 - 1.0) vs. occupancy (Huthayfa's idea)
+  \item meta data for IGV, and maybe additional tracks (i.e. all methylation probes)
+  \item Andreas had some idea (to follow via email)
+\end{enumerate}  
+\item[2018-06-26] meeting with the group. Discussed the results and overview of the project (Whiteboard-photo-20180626).
+Break for the summer to collect remaining data (methylation)
+\item[2018-08-14] meeting with the group. Discussed the status of the collected data. Few more libraries to come-in soon. Discussed overview of the project (Whiteboard-photo-20180814), work tasks, library codes and Bianca access. In particular, 
+\begin{enumerate}
+  \item ChIP-seq CTCF characterization (HM)
+  \item Methylation description (HM)
+  \item Methylation WGBS libararies (find out where they are etc.) (HM \& OD)
+  \item Differential binding (HM)
+  \item Differential methylation (OD)
+  \item Data integration: ChIP-seq, Methylation and RNA-seq (OD)
+  \item Aza part (HM)
+  \end{enumerate}
+Other comments / ideas
+\begin{enumerate}
+  \item how to define enhancers regions (AL to check and send out files)
+  \item how to best use 4 WGBS libraries (2 TET2 and 2 non-TET2 mutations, within libraries correlation, Soren has a potential paper in mind)
+  \item Aitken et al. paper found by HM
+\end{enumerate}
+\item[2018-09-05] Meeting with the group. 
+\item[2018-10-11] Meeting with the group. To do / comments
+\begin{enumerate}
+  \item MethylationEPIC: UPN177 is a duplicated library, remove and re-run before using data for integration
+  \item ChIP-seq dataset: NBM03, is that potentially outlying library? It does not cluster together with other NBMs, have a look into that incl. libraries QCs
+  \item ChIP-seq dataset: motif enrichment. Do we have other than CTCF TFs binding. Think how to but e.g. run for differentially binding sites
+  \item ChIP-seq dataset: annotate with enhancers regions
+  \item Overall: remove grey background from the plots (throughout the report)
+  \item RNA-seq: count table for drug-treated libraries
+  \item Integrative: continue data integration
+\end{enumerate}
+
+\end{description}
+
+\section{Important practical information}
+\subsection{Data responsibility}
+\label{DataRes}
+\begin{description}
+\item [NBIS \& Uppnex] Unfortunately, we do not have resources to keep any files associated with the support request. We kindly suggest that you store safely the results delivered by us. In addition, we kindly ask that you remove the files from UPPMAX/UPPNEX. The main storage at UPPNEX is optimized for high-speed and parallel access, which makes it expensive and not the right place for longer time archiving. Please consider others by not taking up the expensive space.
+\item[Long-term backup] The responsibility for data archiving lies with universities and we recommend asking your local IT for support with long-term data archiving. Also a newly established \href{https://www.scilifelab.se/data/}{Data Office} at SciLifeLab may be of help to discuss other options. 
+\end{description}
+
+\subsection{Acknowledgments}
+\label{acknowledgments}
+If you are presenting the results in a paper, at a workshop or conference, we kindly remind you to acknowledge us according to the signed \href{http://nbis.se/assets/doc/nbis-support-useragreement.pdf}{USER AGREEMENT NBIS support}. Especially,
+\begin{description}
+\item[NBIS staff] should be included as a co-author if the support work leads to a publication and when this is merited in accordance to the ethical recommendations for authorship, e.g. {\href{http://www.icmje.org/recommendations/}{ICMJE recommendations}}. If applicable, please include {\href{\staffWeb}{{\staff}, \affilations}} as co-author.
+\item [NBIS] If the above is not applicable, please acknowledge NBIS according to this example "Support by NBIS (National Bioinformatics Infrastructure Sweden) is gratefully acknowledged"
+\item[Uppmax] In addition, Uppmax kindly asks you to acknowledge UPPMAX and SNIC. If applicable, please add: {\href{\uppmaxWeb}{The computations were performed on resources provided by SNIC through Uppsala Multidisciplinary Center for Advanced Computational Science (UPPMAX) under Project {\noUppmax}.}}
+% \item[NGI] In any and all publications based on data from NGI Sweden, the authors must acknowledge SciLifeLab, NGI and Uppmax, like so: \href{https://ngisweden.scilifelab.se/info/faq#how-do-i-acknowledge-ngi-in-my-publication}{The authors would like to acknowledge support from Science for Life Laboratory, the National Genomics Infrastructure, NGI, and Uppmax for providing assistance in massive parallel sequencing and computational infrastructure.}
+\end{description}
+
+%% MATERIALS AND METHODS SECTION
+\footnotesize
+%\normalsize
+\section{Materials and Methods}
+\subsection{Available data}
+Multiple omics dataset were collected for the AML patients and healthy control
+\begin{description}
+  \item[Methylation]: The Infinium MethylationEPIC BeadChip profiles
+  \item[ChIP-seq]: ChIP-seq libraries with corresponding inputs sequenced on HiSeq 2500 with 1 x 50bp setup using HiSeq Rapid SBS Kit v2 chemistry
+  \item[RNA-seq]: PE Illumina libraries, .fastq format. 
+\end{description}
+
+<<data-avail, echo=F, results='asis', cache=F>>=
+ 
+ library(xtable)
+ inp.meta <- "../../DATA/Meta/metaData_20180814.txt"
+ m.meta <- read.delim(inp.meta)
+ 
+ m.meta$ChIPseq <- as.factor(m.meta$ChIPseq)
+ m.meta$Drug <- as.factor(m.meta$Drug)
+ 
+print(xtable(m.meta, caption = "Available data for integrative analyses", align = c("l", "l", "c", "c", "c", "c", "c", "c", "c"), label="tab:metadata"), caption.placement = "bottom",
+   size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+print(xtable(summary(m.meta[m.meta$Drug==0,])), caption="Summary of the data (without the drug libraries)", caption.placement = "bottom",
+   size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+#summary(m.meta[m.meta$Drug==1,])
+
+@
+
+\scriptsize
+\subsection{Data processing}
+\begin{description}
+  \item[Methylation]: Illumina MethylationEPIC data were processed with \texttt{ChAMP} package [\cite{Tian2017}]. Probes with a detection p-value above 0.01 in one more samples, probes with a beadcount $<$ 3,  non-CG probes, probes with SNPs [\cite{Zhou2017}], probes aligning to multiple locations [\cite{Nordlund2013}] and probes on the X and Y chromosomes were removed from the analysis. Data were normalized using BMIQ [\cite{Teschendorff2013}] to reduce the technical variation and bias of type 2 probes values and to eliminate type 1 enrichment bias caused by the lower dynamic range of type 2 probes. \texttt{limma} package within \texttt{ChAMP} was used to calculate differential methylation probes between phenotypes of interest. 
+  \item[ChIP-seq]: raw sequence quality was assessed with {\fastqc} [\cite{Andrews2010}]. {\trimmomatic} [\cite{Breese2013}] was used to cut TrueSeq3-SE adapters and Illumina-specific sequences from the reads, to remove poor quality reads [LEADING:20, TRAILING:20, SLIDINGWINDOW:4:18] as well short reads (MINLEN:36). Reads were aligned against reference {\refGenome} genome with {\bowtie} [\cite{Langmead2011}] suppressing all multiple alignments [-n 2 --best -m 1 -q -S -p 3 -e 80 -t --chunkmbs 512]. Strand cross-correlation was calculated with {\phantompeakqualtools}. Duplicated reaads were marked with  {\picard} [\cite{BroadInstitute}] and reads overlapping with the blacklisted genomic regions with artificially high signals were removed with {\NGSUtils} [\cite{Breese2013}]. {\deepTools} [\cite{Ramirez2014}] was also run to prepare ChIP-seq cumulative enrichment plots and to assess overall similarity between libraries using Pearson and Spearman correlation based heatmaps and Principal Component Analysis (5000 bp). Peaks were called with {\MACS} [\cite{Badala2008}]. Differential binding {\DiffBind} R Bioconductor package was used to run differential binding analysis. In particular, peaks identified with {\MACS} were processed to identify sites present in at least two peaksets. Sequencing reads overlapping peaks intervals were counted and used for statistically differentially bound sites based on evidence of binding affinity (measured by differences in read densities) and via DESeq2 statistical methods. {\ChIPpeakAnno} was used for down-stream analysis of peaks, i.e. annotations, visualizations binding site distribution relative to features and obtaining enriched pathways. 
+  \item[RNA-seq] Raw sequencing reads were processed to obtain counts per genes for each samples. Raw sequence quality was assessed with {\fastqc} [\cite{Andrews2010}]. {\trimmomatic} [\cite{Breese2013}] was used to filter out low quality reads [SLIDINGWINDOW:4:20 MINLEN:36]. {\star} was used to align the reads to the reference genome {\refGenome} as downloaded from {\refSource}. {\featureCounts} from {\subread} was used to count the fragments in the exon regions as defined in the corresponding file, using default parameters. Specifically, for paired-end reads, a fragment is said to overlap a feature if at least one read base is found to overlap the feature. Fragments overlapping with more than one feature and multi-mapping reads are not counted. Counts from multiple lanes were added. {\samtools} was used to sort and index the BAM files containing the aligned reads. {\MultiQC} was used to aggregate QC results across many samples into a single report. \texttt{biomaRt} R (\nameref{sessionInfo}) package was used to annotate Ensembl gene identifiers with chromosome name, official gene symbol and description. Low count reads were filtered by keeping reads with at least 1 read per million in at least 2 samples. \texttt{edgeR} package was used to normalize for the RNA composition by finding a set of scaling factors for the library sizes that minimize the log-fold changes between the samples for most genes, using a trimmed mean of M values (TMM) between each pair of samples. The normalized counts were used to examine the samples for outliers and relationships, using PCA, and heatmap based on the Pearson correlation coefficient between every sample pair. For PCA scores plots,  ellipses, where visible, were drawn at the 75\% confidence level. \texttt{edgeR} package was used to define design matrix based on the experimental design, fitting gene-wise glms model and conducting likelihood ratio tests for the selected group comparisons
+\end{description}
+
+\section{Results}
+\normalsize
+
+\subsection{MethylationEPIC}
+\subsubsection{QC}
+\texttt{ChAMP} package QCs output on Box under \texttt{Figures/QC-MethylationEPIC}
+
+\subsubsection{Overview}
+
+<<epic-setup, echo=F>>=
+
+  rm(list=ls())
+  
+  library(edgeR)
+  library(ggplot2)
+  library(heatmap3)
+  library(scater)
+  library(org.Hs.eg.db)  
+  library(gplots)
+  library(RColorBrewer)
+  library(xtable)
+  library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+  library(ReactomePA)
+  library(clusterProfiler)
+  library(destiny)
+  txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+  func.color <- function(inp.group)
+  {
+  if (length(unique((inp.group)))>2) {colors.fav <- cols <- brewer.pal(length(unique(inp.group)), "Set1")
+  }else  {colors.fav <- cols <- brewer.pal(4, "Set1")}
+  group.unique <- unique(inp.group)
+  out.color <- inp.group
+  for (i in 1:length(unique(group.unique))){out.color[inp.group==group.unique[i]]=colors.fav[i]}
+  out.color
+  }
+
+@
+
+<<epic-input, echo=F, results='asis'>>=
+
+  load("../../DATA/processed/RData/MethylationEPIC/EpicArray_DMP.RData")
+  
+  print(xtable(summary(epic.meta, maxsum = nrow(epic.meta)), caption="Summary of the methylation EPIC libraries"),
+        caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=FALSE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+  
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-epic-overview-pca, echo=F, fig.height=5, fig.width=12>>=
+    
+
+  mytheme=theme(panel.background = element_rect(fill = "white"),  
+                panel.border = element_rect(colour = "black", fill=NA),
+                panel.grid.minor = element_line(colour="grey", linetype = 'dotted'),
+                panel.grid.major = element_line(colour="grey", linetype = 'dotted'))
+ 
+
+  pca.matrix <- as.matrix(epic.betaNorm)
+  pca.data <- epic.meta
+
+  pca.model <- prcomp(t(pca.matrix), center=TRUE, scale.=FALSE)
+  pca.frame <- data.frame(PC1=pca.model$x[,1], PC2=pca.model$x[,2], PC3=pca.model$x[,3], Factor=pca.data$Factor, Condition=pca.data$Condition)
+  pca.eigs <- pca.model$sdev^2
+  pca.var <- round(pca.eigs / sum(pca.eigs)*100,2)
+
+  plot.epic_pca12 <- ggplot(pca.frame, aes(PC1, PC2, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC2: ", pca.var[2], "% variance", sep=""))+theme(legend.title=element_blank())+mytheme#+stat_ellipse(level=0.75)
+  plot.epic_pca13 <- ggplot(pca.frame, aes(PC1, PC3, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC3: ", pca.var[3], "% variance", sep=""))+theme(legend.title=element_blank())+mytheme#+stat_ellipse(level=0.75)
+
+  multiplot(plot.epic_pca12, plot.epic_pca13, cols=2)
+  rm(pca.matrix, pca.data, pca.model, pca.frame, pca.eigs, pca.var)
+
+@
+\end{center}
+\caption{PCA scores plot methylation probes, n=\Sexpr{formatC(nrow(epic.betaNorm), big.mark=" ", format="f", digits=0)}}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-epic-overview-heatmap, echo=F, fig.height=12, fig.width=12>>=
+  
+  n.top <- 1000
+
+  iqr.data <- rowIQRs(epic.betaNorm)
+  iqr.o <- order(iqr.data, decreasing = TRUE)
+  heatmap.data <- epic.betaNorm[iqr.o[1:n.top],]
+
+  ColSideAnn <- data.frame(Condition=epic.meta$Condition)
+  rownames(ColSideAnn) <- epic.meta$ID
+
+  #graphics.off()
+  #quartz()
+  heatmap3(heatmap.data,
+         showRowDendro=TRUE,
+         ColSideCut=0.7,
+         ColSideAnn=ColSideAnn,
+         ColSideFun=function(x) showAnn(x),
+         ColSideWidth=0.8,
+         RowAxisColors=1,
+         verbose=FALSE,
+         labRow = FALSE, 
+         scale="none")
+
+  rm(heatmap.data, iqr.data, iqr.o, ColSideAnn, n.top)
+  
+  
+
+@
+\end{center}
+\caption{Heatmap for top 1000 methylation probes, based on IQR dispersion measure}
+\end{figure}
+
+\subsubsection{Differential methylation}
+
+<<epic-de-overview-table, echo=F, results='asis', cache=TRUE>>=
+
+  gr1 <- c("NBM", "TET2_minus", "NPM1_minus")
+  gr2 <- c("AML", "TET2", "NPM1")
+  m1 <- c(length(which(epic.meta$Factor=="NBM")), length(which(epic.meta$TET2=="TET2-")), length(which(epic.meta$NPM1=="NPM1-")))
+  m2 <- c(length(which(epic.meta$Factor=="AML")), length(which(epic.meta$TET2=="TET2+")), length(which(epic.meta$NPM1=="NPM1+")))
+  
+  epic.de <- data.frame(Group1=gr1, Members1=m1, Group2=gr2, Members2=m2)
+  
+  #n <- nrow(rnaseq.norm)
+  de.sign <-c(nrow(dmp.aml), nrow(dmp.tet2), nrow(dmp.npm1))
+  de.up <- c(length(which(dmp.aml$logFC>0)), length(which(dmp.tet2$logFC<0)), length(which(dmp.npm1$logFC<0))) # TET2 and NMP1 reversed comparision, contrast
+  de.down <- c(length(which(dmp.aml$logFC<0)), length(which(dmp.tet2$logFC>0)), length(which(dmp.npm1$logFC>0))) # TET2 and NMP1
+  
+  epic.de$Sign <- de.sign
+  epic.de$FoldUp <- de.up
+  epic.de$FoldDown <- de.down
+  
+  print(xtable(epic.de, display = c("s", "s", "d", "s", "d", "d", "d", "d"), 
+  caption = "Summary of differential methylation (DMP) results", label="tab:dmp-overview"), caption.placement = "bottom", 
+  size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+  
+  rm(gr1, gr2, m1, m2, de.sign, de.up, de.down)
+  
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-epic-de-pca, echo=F, fig.height=5, fig.width=12>>=
+
+  dmp.probes <- unique(c(rownames(dmp.aml), rownames(dmp.tet2), rownames(dmp.npm1)))
+  de.sign <- match(dmp.probes, rownames(epic.betaNorm))
+  
+  pca.matrix <- as.matrix(epic.betaNorm[de.sign,])
+  pca.data <- epic.meta
+
+  pca.model <- prcomp(t(pca.matrix), center=TRUE, scale.=FALSE)
+  pca.frame <- data.frame(PC1=pca.model$x[,1], PC2=pca.model$x[,2], PC3=pca.model$x[,3], Factor=pca.data$Factor, Condition=pca.data$Condition)
+  pca.eigs <- pca.model$sdev^2
+  pca.var <- round(pca.eigs / sum(pca.eigs)*100,2)
+
+  plot.epic_de_pca12 <- ggplot(pca.frame, aes(PC1, PC2, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC2: ", pca.var[2], "% variance", sep=""))+theme(legend.title=element_blank())+mytheme#+stat_ellipse(level=0.75)
+  plot.epic_de_pca13 <- ggplot(pca.frame, aes(PC1, PC3, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC3: ", pca.var[3], "% variance", sep=""))+theme(legend.title=element_blank())+mytheme#+stat_ellipse(level=0.75)
+
+  multiplot(plot.epic_de_pca12, plot.epic_de_pca13, cols=2)
+  rm(pca.matrix, pca.data, pca.model, pca.frame, pca.eigs, pca.var)
+
+@
+\end{center}
+\caption{PCA scores plot on differentially methylated probes}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-epic-de-heatmap, echo=F, fig.height=12, fig.width=12>>=
+  
+  n.top <- 1000
+  
+  heatmap.data <- epic.betaNorm[de.sign,]
+  
+  iqr.data <- rowIQRs(heatmap.data)
+  iqr.o <- order(iqr.data, decreasing = TRUE)
+  heatmap.data <- heatmap.data[iqr.o[1:n.top],]
+
+  ColSideAnn <- data.frame(Condition=epic.meta$Condition)
+  rownames(ColSideAnn) <- epic.meta$ID
+
+  #graphics.off()
+  #quartz()
+  heatmap3(heatmap.data,
+         showRowDendro=TRUE,
+         ColSideCut=0.5,
+         ColSideAnn=ColSideAnn,
+         ColSideFun=function(x) showAnn(x),
+         ColSideWidth=0.8,
+         RowAxisColors=1,
+         verbose=FALSE,
+         labRow = FALSE)
+
+  rm(heatmap.data, iqr.data, iqr.o, ColSideAnn, n.top)
+
+@
+\end{center}
+\caption{Heatmap for top 1000 differentially methylated probes, based on IQR dispersion measure}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-epic-de-venn, echo=F, fig.height=4, fig.width=4, include=TRUE>>=
+library(VennDiagram)
+
+list.venn <- list(NBM_AML=rownames(dmp.aml), TET2=rownames(dmp.tet2), NPM1=rownames(dmp.npm1))
+col.venn <- brewer.pal(3, "Set1")
+
+#graphics.off()
+#quartz()
+plot.venny <- venn.diagram(list.venn, filename=NULL, fill=c(col.venn[1], col.venn[2], col.venn[3]), category.names = c("NBM vs. AML", "TET2- vs. TET2+", "NPM1- vs. NPM1+"), cat.pos = c(350, 180, 30), cat.dist = c(0.05, -0.05, 0.1))
+grid.draw(plot.venny)
+
+rm(col.venn, list.venn)
+
+@
+\end{center}
+\caption{Venn diagram: differentially methylated probes}
+\end{figure}
+
+<<epic-de-topHits, echo=F, results='asis'>>=
+
+  n.top <- 5
+  
+  idx <- c(1,2,5,10,12,14,15,16)
+  de.top <- rbind(dmp.aml[1:n.top, idx], dmp.tet2[1:n.top, idx], dmp.npm1[1:n.top, idx])
+  de.top$Cmp <- c(rep("AML_vs_NBM", n.top), rep("TET2m_vs_TET2", n.top), rep("NPM1m_vs_NPM1", n.top))
+  
+  print(xtable(de.top, display = c("s", "f", "f", "E", "d", "s", "s", "s", "s", "s"), align=rep("r", 10), 
+  caption = "Top differentially methylated probes", label="tab:dmp-top"), caption.placement = "bottom", 
+  size="scriptsize",
+  include.rownames=TRUE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+  
+  rm(idx)
+
+@
+
+<<fig-epic-de-boxplots, echo=F, fig.height=12, fig.width=12>>=
+  
+  idx <- match(rownames(de.top), rownames(epic.betaNorm))
+  de.data <- epic.betaNorm[idx,]
+  de.meta <- epic.meta
+  color.gr <- func.color(as.character(epic.meta$Condition))
+
+  #top.deData <- data.batchAdjExt[match(top.de, rownames(data.batchAdj)),]
+  #top.fcData <- data.batchAdjExt[match(top.fc, rownames(data.batchAdj)),]
+  
+  #graphics.off()
+  #quartz()
+  par(mfrow=c(3,5))
+  for (i in 1:(n.top*3))
+  {
+    boxplot(de.data[i,]~ de.meta$Condition, col=unique(color.gr), las=2, main=rownames(de.data)[i], cex.main=0.9)
+    stripchart(de.data[i,]~de.meta$Condition, vertical = TRUE, method = "jitter", add = TRUE, pch = 20, col = 'blue')
+  }
+  
+  rm(idx, color.grp, i, de.data, de.meta)
+  
+@
+
+<<fig-epic-diffBind-KEGG, echo=F, fig.height=12, fig.width=12>>=
+  
+  inp.de <- dmp.aml
+  inp.option <- 1
+  func.entrezID <- function(inp.de, inp.option)
+  {
+    if (inp.option==1){
+      
+      genes.up <- inp.de$gene[inp.de$logFC>0]
+      genes.down <- inp.de$gene[inp.de$logFC<0]
+      
+    }else
+    {
+      genes.up <- inp.de$gene[inp.de$logFC<0]
+      genes.down <- inp.de$gene[inp.de$logFC>0]
+      
+    }
+  
+      genes.up <- bitr(genes.up, fromType="SYMBOL", toType="ENTREZID", OrgDb = "org.Hs.eg.db") 
+      genes.down <- bitr(genes.down, fromType="SYMBOL", toType="ENTREZID", OrgDb = "org.Hs.eg.db") 
+      
+      genes.up <- as.character(genes.up$ENTREZID)
+      genes.down <- as.character(genes.down$ENTREZID)
+      
+      genes.out <- list(up=genes.up, down=genes.down)
+      genes.out
+  }
+
+  genes.aml <- func.entrezID(dmp.aml, 1)
+  genes.tet2 <- func.entrezID(dmp.tet2, 2)
+  genes.npm1 <- func.entrezID(dmp.npm1, 2)
+  
+  genes.list <- list(AML_down=genes.aml$down, AML_up=genes.aml$up, TET2_down=genes.tet2$down, 
+                     TET2_up=genes.tet2$up, NPM1_down=genes.npm1$down, NPM1_up=genes.npm1$up)
+
+  #graphics.off()
+  #quartz()
+  compKEGG <- compareCluster(geneCluster   = genes.list,
+                         fun           = "enrichKEGG",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+  
+   dotplot(compKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis")
+   
+   rm(genes.list, genes.aml, genes.tet2, genes.npm1, inp.de, inp.option)
+  
+@
+
+<<epic-save, echo=F>>=
+  
+  #save.image("../../scratch/cache/tmp-epic.RData")
+
+@
+
+\subsection{ChIP-seq}
+\subsubsection{QC}
+Libraries QCs are in the separate report \texttt{3696\_report-chipseq.pdf}
+
+\subsubsection{Overview}
+% ChIP-seq overview
+<<chipseq-setup, echo=F, cache=TRUE>>=
+
+  rm(list=ls())
+
+  library(DiffBind)
+  library(gplots)
+  library(ggplot2)
+  library(scater)
+  library(heatmap3)
+  library(ChIPpeakAnno)
+  library(RColorBrewer)
+  library(xtable)
+  library(ChIPseeker)
+  library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+  library(diffloop)
+  library(ReactomePA)
+  library(clusterProfiler)
+  txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+  func.color <- function(inp.group)
+  {
+  if (length(unique((inp.group)))>2) {colors.fav <- cols <- brewer.pal(length(unique(inp.group)), "Set1")
+  }else  {colors.fav <- cols <- brewer.pal(4, "Set1")}
+  group.unique <- unique(inp.group)
+  out.color <- inp.group
+  for (i in 1:length(unique(group.unique))){out.color[inp.group==group.unique[i]]=colors.fav[i]}
+  out.color
+  }
+
+  mytheme=theme(panel.background = element_rect(fill = "white"),
+                panel.border = element_rect(colour = "black", fill=NA),
+                panel.grid.minor = element_line(colour="grey", linetype = 'dotted'),
+                panel.grid.major = element_line(colour="grey", linetype = 'dotted'))
+
+@
+
+<<chipseq-input, echo=F, results='asis', cache=TRUE>>=
+  load("../../DATA/processed/RData/DiffBind/diffCounts_nk.RData")
+  #load("../../DATA/processed/RData/DiffBind/diffBind_nk2.RData")
+  chipseq.diffBind <- pctcf_nk
+  chipseq.design <- samples
+  rm(pctcf_nk, samples)
+
+  #chipseq.diffBind$samples$SampleID
+  #chipseq.diffBind$samples$Factor
+  #chipseq.diffBind$samples$Condition
+  #chipseq.diffBind$samples$Replicate
+
+  chipseq.meta <- data.frame(ID=chipseq.diffBind$samples$SampleID, Factor=chipseq.diffBind$samples$Factor)
+  chipseq.condition <- c("NBM", "NBM", "NBM", "NBM", "NBM",
+                    "AML", "AML", "AML", "AML", "NPM1",
+                     "NPM1", "AML", "TET2_NPM1", "TET2_NPM1", "TET2",
+                    "TET2", "TET2", "TET2", "NPM1")
+  chipseq.meta$Condition <- as.factor(chipseq.condition)
+  rm(chipseq.condition)
+
+  print(xtable(summary(chipseq.meta, maxsum = nrow(chipseq.meta)), caption="Summary of the ChIP-seq libraries"),
+        caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=FALSE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+@
+
+<<chipseq-peaks-all, echo=F, cache=TRUE>>=
+
+  chipseq.peaks <- dba.peakset(chipseq.diffBind, bRetrieve = TRUE)
+  chipseq.occupancy <- chipseq.diffBind$binding
+  rownames(chipseq.occupancy) <- paste("Chr", chipseq.occupancy[,1], ":", chipseq.occupancy[, 2], "-", chipseq.occupancy[, 3], sep="")
+  chipseq.occupancy <- chipseq.occupancy[, -c(1:3)]
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-chipseq-overview-pca, echo=F, fig.height=5, fig.width=12, cache=TRUE>>=
+
+  pca.matrix <- chipseq.occupancy
+  pca.data <- chipseq.meta
+  
+  pca.model <- prcomp(t(pca.matrix), center=TRUE, scale.=TRUE)
+  pca.frame <- data.frame(PC1=pca.model$x[,1], PC2=pca.model$x[,2], PC3=pca.model$x[,3], Factor=pca.data$Factor, Condition=pca.data$Condition)
+  pca.eigs <- pca.model$sdev^2
+  pca.var <- round(pca.eigs / sum(pca.eigs)*100,2)
+  
+  plot.chipseq_pca12 <- ggplot(pca.frame, aes(PC1, PC2, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC2: ", pca.var[2], "% variance", sep=""))+theme(legend.title=element_blank())+mytheme
+    
+  #+stat_ellipse(level=0.75)
+
+  plot.chipseq_pca13 <- ggplot(pca.frame, aes(PC1, PC3, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC3: ", pca.var[3], "% variance", sep=""))+theme(legend.title=element_blank())+mytheme#+stat_ellipse(level=0.75)
+
+  multiplot(plot.chipseq_pca12, plot.chipseq_pca13, cols=2)
+  rm(pca.matrix, pca.data, pca.model, pca.frame, pca.eigs, pca.var)
+@
+\end{center}
+\caption{PCA scores plot using affinity data for all sites, n=\Sexpr{formatC(nrow(chipseq.occupancy), big.mark=" ", format="f", digits=0)}}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-chipseq-overview-heatmap, echo=F, fig.height=12, fig.width=12>>=
+n.top <- 1000
+
+iqr.data <- rowIQRs(chipseq.occupancy)
+iqr.o <- order(iqr.data, decreasing = TRUE)
+heatmap.data <- chipseq.occupancy[iqr.o[1:n.top],]
+
+ColSideAnn <- data.frame(Condition=chipseq.meta$Condition)
+rownames(ColSideAnn) <- chipseq.meta$ID
+
+#quartz()
+heatmap3(heatmap.data,
+         showRowDendro=TRUE,
+         ColSideCut=0.3,
+         ColSideAnn=ColSideAnn,
+         ColSideFun=function(x) showAnn(x),
+         ColSideWidth=0.8,
+         RowAxisColors=1,
+         verbose=FALSE,
+         labRow = FALSE)
+
+rm(heatmap.data, iqr.data, iqr.o, ColSideAnn, n.top)
+
+@
+\end{center}
+\caption{Heatmap for top 1000 sites, based on IQR dispersion measure}
+\end{figure}
+
+
+% ChIP-seq differential binding
+\subsubsection{Differential binding analysis}
+
+<<chipseq-diffBind-regroup, echo=F>>=
+
+data.tet2 <- rep("x", nrow(chipseq.meta))
+data.tet2[which(chipseq.meta$Condition=="TET2")] <- "TET2+"
+data.tet2[which(chipseq.meta$Condition=="AML" | chipseq.meta$Condition=="NPM1")] <- "TET2-"
+
+data.npm1 <- rep("x", nrow(chipseq.meta))
+data.npm1[which(chipseq.meta$Condition=="NPM1")] <- "NPM1+"
+data.npm1[which(chipseq.meta$Condition=="AML" | chipseq.meta$Condition=="TET2")] <- "NPM1-"
+
+chipseq.meta$TET2 <- as.factor(data.tet2)
+chipseq.meta$NPM1 <- as.factor(data.npm1)
+
+rm(data.tet2, data.npm1)
+#summary(chipseq.meta)
+
+@
+
+<<chipseq-diffBind, echo=F, eval=FALSE>>=
+
+# NBM vs. AML
+diffBind.nbm <- dba.contrast(chipseq.diffBind, chipseq.diffBind$masks$NBM, chipseq.diffBind$masks$AML, "NBM", "AML")
+#dba.show(diffBind.nbm, bContrasts = TRUE)
+diffBind.nbm <- dba.analyze(diffBind.nbm, method=DBA_ALL_METHODS)
+#dba.show(diffBind.nbm, bContrasts=T)
+
+# Comparison TET2- vs. TET2+
+diffBind.tet2 <- chipseq.diffBind
+diffBind.tet2$samples$Condition <- chipseq.meta$TET2
+diffBind.tet2 <- dba.contrast(diffBind.tet2, diffBind.tet2$samples$Condition=="TET2-", diffBind.tet2$samples$Condition=="TET2+", "TET2_minus", "TET2")
+#dba.show(pctcf_tet2, bContrasts = TRUE)
+diffBind.tet2 <- dba.analyze(diffBind.tet2, method=DBA_ALL_METHODS)
+#dba.show(diffBind.tet2, bContrasts=T)
+#dba.plotMA(pctcf_tet2)
+#dba.plotMA(pctcf_tet2, method=DBA_EDGER)
+
+# Comparison NMP1- vs. NMP1+
+#rm(pctcf_npm1)
+diffBind.npm1 <- chipseq.diffBind
+diffBind.npm1$samples$Condition <- chipseq.meta$NPM1
+diffBind.npm1 <- dba.contrast(diffBind.npm1, diffBind.npm1$samples$Condition=="NPM1-", diffBind.npm1$samples$Condition=="NPM1+", "NPM1_minus", "NPM1")
+#dba.show(diffBind.npm1, bContrasts = TRUE)
+diffBind.npm1 <- dba.analyze(diffBind.npm1, method=DBA_ALL_METHODS)
+#dba.show(diffBind.npm1, bContrasts = T)
+#dba.plotMA(diffBind.npm1, method=DBA_EDGER)
+
+# NOTE: will keep EDGER results for this comparision as it looks much better on the MA plot
+save.image("../../scratch/cache/tmp-chipseq-diffBind.RData")
+
+
+@
+
+<<echo=F, cache=F>>=
+
+rm(list=ls())
+load("../../scratch/cache/tmp-chipseq-diffBind.RData")
+
+@
+
+<<chipseq-diffBind-overview-table, echo=F, results='asis', eval=T, cache=TRUE>>=
+
+peaks.nbm <- dba.report(diffBind.nbm, 1)
+peaks.tet2 <- dba.report(diffBind.tet2, 1)
+peaks.npm1 <- dba.report(diffBind.npm1, 1, method = DBA_EDGER)
+
+chipseq.de <- rbind(dba.show(diffBind.nbm, bContrasts = TRUE),
+                 dba.show(diffBind.tet2, bContrasts = TRUE),
+                 dba.show(diffBind.npm1, bContrasts = TRUE))
+
+no.deseq2 <- as.numeric(as.matrix(chipseq.de$DB.DESeq2))
+no.edgeR <- as.numeric(as.matrix(chipseq.de$DB.edgeR))
+
+chipseq.de$Sign <- no.deseq2
+chipseq.de$Sign[3] <- no.edgeR[3]
+
+#dba.plotBox(diffBind.nbm)
+#dba.plotBox(diffBind.tet2)
+#dba.plotBox(diffBind.npm1, method=DBA_EDGER)
+
+# graphics.off()
+# tmp.sign <- as.numeric(names(peaks.nbm))
+# tmp.data <- chipseq.occupancy[tmp.sign,]
+# boxplot(tmp.data[4,]~chipseq.meta$Factor)
+
+no.foldUp <- c(sum(peaks.nbm$Fold<0), sum(peaks.tet2$Fold<0), sum(peaks.npm1$Fold<0))
+no.foldDown <- c(sum(peaks.nbm$Fold>0), sum(peaks.tet2$Fold>0), sum(peaks.npm1$Fold>0))
+
+#dba.show(diffBind.nbm, bContrasts = T)
+#dba.plotHeatmap(diffBind.nbm, contrast=1, correlations=FALSE)
+#dba.plotMA(diffBind.nbm)
+#dba.plotVolcano(diffBind.nbm)
+
+#dba.show(diffBind.nbm, bContrasts = T)
+#dba.show(diffBind.npm1, bContrasts = T)
+#dba.plotMA(diffBind.nbm)
+#dba.plotVolcano(diffBind.nbm)
+
+#head(peaks.nbm)
+#length(which(peaks.nbm$Fold>0))
+#head(peaks.nbm)
+#length(which(peaks.nbm$Fold<0))
+
+chipseq.de$FoldUp <- no.foldUp
+chipseq.de$FoldDown <- no.foldDown
+
+rm(no.foldDown, no.foldUp, no.deseq2, no.edgeR)
+
+print(xtable(chipseq.de, display = c("s", "s", "d", "s", "d", "d", "d", "d", "d", "d"),
+  caption = "Summary of differentially binding results", label="tab:diffBind-overview"), caption.placement = "bottom",
+  size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-chipseq-diffBind-venn, echo=F, fig.height=4, fig.width=4, include=TRUE>>=
+library(VennDiagram)
+
+list.venn <- list(NBM_AML=names(peaks.nbm), TET2=names(peaks.tet2), NPM1=names(peaks.npm1))
+col.venn <- brewer.pal(3, "Set1")
+
+#graphics.off()
+#quartz()
+plot.venny <- venn.diagram(list.venn, filename=NULL, fill=c(col.venn[1], col.venn[2], col.venn[3]), category.names = c("NBM vs. AML", "TET2- vs. TET2+", "NPM1- vs. NPM1+"), cat.pos = c(0, 0, 180), cat.dist = c(-0.1, -0.1, -0.1))
+
+grid.draw(plot.venny)
+rm(col.venn, list.venn)
+@
+\end{center}
+\caption{Venn diagram: differentially binding sites}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-chipseq-diffBind-pca, echo=F, fig.height=5, fig.width=12, include=T, cache=TRUE>>=
+
+  peaks.sign <- sort(as.numeric(unique(c(names(peaks.nbm), TET2=names(peaks.tet2), NPM1=names(peaks.npm1)))))
+  #length(peaks.sign)
+
+  #chipseq.occuppancySign <- chipseq.occupancy[peaks.sign, ]
+
+  pca.matrix <- chipseq.occupancy[peaks.sign, ]
+  pca.data <- chipseq.meta
+
+  pca.model <- prcomp(t(pca.matrix), center=TRUE, scale.=TRUE)
+  pca.frame <- data.frame(PC1=pca.model$x[,1], PC2=pca.model$x[,2], PC3=pca.model$x[,3], Factor=pca.data$Factor, Condition=pca.data$Condition)
+  pca.eigs <- pca.model$sdev^2
+  pca.var <- round(pca.eigs / sum(pca.eigs)*100,2)
+
+  plot.diffBind_pca12 <- ggplot(pca.frame, aes(PC1, PC2, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC2: ", pca.var[2], "% variance", sep=""))+theme(legend.title=element_blank())+mytheme#+stat_ellipse(level=0.75)
+  
+  plot.diffBind_pca13 <- ggplot(pca.frame, aes(PC1, PC3, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC3: ", pca.var[3], "% variance", sep=""))+theme(legend.title=element_blank())+mytheme#+stat_ellipse(level=0.75)
+
+ multiplot(plot.diffBind_pca12, plot.diffBind_pca13, cols=2)
+
+ rm(pca.matrix, pca.data, pca.model, pca.frame, pca.eigs, pca.var)
+
+@
+\end{center}
+\caption{PCA scores plots: differentially binding sites}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+<<fig-chipseq-diffBind-heatmap, echo=F, fig.height=12, fig.width=12, cache=TRUE>>=
+
+n.top <- 1000 #nrow(chipseq.occupancy[peaks.sign, ])
+heatmap.data <- chipseq.occupancy[peaks.sign, ]
+
+iqr.data <- rowIQRs(heatmap.data)
+iqr.o <- order(iqr.data, decreasing = TRUE)
+heatmap.data <- heatmap.data[iqr.o[1:n.top],]
+
+ColSideAnn <- data.frame(Condition=chipseq.meta$Condition)
+rownames(ColSideAnn) <- chipseq.meta$ID
+
+#graphics.off()
+#quartz()
+heatmap3(heatmap.data,
+         showRowDendro=TRUE,
+         ColSideCut=0.08,
+         ColSideAnn=ColSideAnn,
+         ColSideFun=function(x) showAnn(x),
+         ColSideWidth=0.8,
+         RowAxisColors=1,
+         verbose=FALSE,
+         labRow = FALSE)
+
+rm(heatmap.data, iqr.data, iqr.o, n.top, peaks.sign, ColSideAnn)
+
+@
+\end{center}
+\caption{Heatmap for top 1000 differentially binding sites, based on IQR dispersion measure}
+\end{figure}
+
+
+<<diffBind-peaks-list, echo=F, include=FALSE>>=
+  txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+
+  # Annotated list of diffBind peaks (no up or down information)
+  peaks.nbm_annotated <- annotatePeak(addchr(peaks.nbm), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+  peaks.tet2_annotated <- annotatePeak(addchr(peaks.tet2), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+  peaks.npm1_annotated <- annotatePeak(addchr(peaks.npm1), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+
+  list.peaks <- list(AML=peaks.nbm_annotated, TET2=peaks.tet2_annotated, NPM1=peaks.npm1_annotated)
+
+  #no.foldUp <- c(sum(peaks.nbm$Fold<0), sum(peaks.tet2$Fold<0), sum(peaks.npm1$Fold<0))
+  #no.foldDown <- c(sum(peaks.nbm$Fold>0), sum(peaks.tet2$Fold>0), sum(peaks.npm1$Fold>0))
+
+  peaks.aml_up <- peaks.nbm[peaks.nbm$Fold<0]
+  peaks.aml_down <- peaks.nbm[peaks.nbm$Fold>0]
+  peaks.tet2_up <- peaks.tet2[peaks.tet2$Fold<0]
+  peaks.tet2_down <- peaks.tet2[peaks.tet2$Fold>0]
+  peaks.npm1_up <- peaks.npm1[peaks.npm1$Fold<0]
+  peaks.npm1_down <- peaks.npm1[peaks.npm1$Fold>0]
+
+  peaks.aml_up_annotate <- annotatePeak(addchr(peaks.aml_up), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+  peaks.aml_down_annotate <- annotatePeak(addchr(peaks.aml_up), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+
+  peaks.tet2_up_annotate <- annotatePeak(addchr(peaks.tet2_up), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+  peaks.tet2_down_annotate <- annotatePeak(addchr(peaks.tet2_up), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+
+  peaks.npm1_up_annotate <- annotatePeak(addchr(peaks.npm1_up), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+  peaks.npm1_down_annotate <- annotatePeak(addchr(peaks.npm1_up), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+
+  list.peaks_up_down <- list(AMLup=peaks.aml_up_annotate, AMLdown=peaks.aml_down_annotate,
+                             TET2up=peaks.tet2_up_annotate, TET2down=peaks.tet2_down_annotate,
+                             NPM1up=peaks.npm1_up_annotate, NPM1down=peaks.npm1_down_annotate)
+
+@
+
+<<chipseq-de-topHits, echo=F, results='asis'>>=
+
+  n.top <- 5
+  idx <- c(1,2, 3, 9, 11, 12, 22)
+
+  peaks.aml_df <- data.frame(peaks.nbm_annotated)
+  peaks.tet2_df <- data.frame(peaks.tet2_annotated)
+  peaks.npm1_df <- data.frame(peaks.npm1_annotated)
+
+  de.top <- rbind(peaks.aml_df[1:n.top, idx], peaks.tet2_df[1:n.top, idx], peaks.npm1_df[1:n.top, idx])
+  de.top$Cmp <- c(rep("AML_vs_NBM", n.top), rep("TET2m_vs_TET2", n.top), rep("NPM1m_vs_NPM1", n.top))
+
+  rownames(de.top) <- c(names(peaks.nbm)[1:n.top], names(peaks.tet2)[1:n.top], names(peaks.npm1[1:n.top]))
+
+  de.top$Fold <- de.top$Fold*(-1)
+
+  print(xtable(de.top[,-3], display = c("s", "d", "d", "f", "E", "s", "s", "s"), align=rep("r", 8),
+  caption = "Top differentially binding sites", label="tab:diffBind-top"), caption.placement = "bottom",
+  size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+  rm(idx)
+
+@
+
+<<fig-chipseq-de-boxplots, echo=F, fig.height=12, fig.width=12, eval=T>>=
+
+  de.top <- as.numeric(c(names(peaks.nbm)[1:n.top], names(peaks.tet2)[1:n.top], names(peaks.npm1)[1:n.top]))
+  peaks.top <- chipseq.peaks[de.top]
+  #peaks.topAnnotate <-  annotatePeak(addchr(peaks.top), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+  de.data <- data.frame(peaks.top)
+  de.data <- as.matrix(de.data[, -c(1:5)])
+  o <- match(colnames(de.data), chipseq.meta$ID)
+  peaks.top <- as.data.frame(peaks.top)
+  rownames(de.data) <- paste(peaks.top$seqnames, ":", peaks.top$start, "-", peaks.top$end, sep="")
+
+  #de.names <- paste(de.top$seqnames, ":", de.top$start, "-", de.top$end, sep="")
+  #de.names <- gsub("chr", "Chr", de.names)
+
+  #idx <- match(de.names, rownames(chipseq.occupancy))
+  de.data <- de.data[,o]
+  de.meta <- chipseq.meta
+  color.gr <- func.color(as.character(chipseq.meta$Condition))
+
+  #top.deData <- data.batchAdjExt[match(top.de, rownames(data.batchAdj)),]
+  #top.fcData <- data.batchAdjExt[match(top.fc, rownames(data.batchAdj)),]
+
+  #graphics.off()
+  #quartz()
+  par(mfrow=c(3,5))
+  for (i in 1:(n.top*3))
+  {
+    boxplot(de.data[i,]~ de.meta$Condition, col=unique(color.gr), las=2, main=rownames(de.data)[i], cex.main=0.9)
+    stripchart(de.data[i,]~de.meta$Condition, vertical = TRUE, method = "jitter", add = TRUE, pch = 20, col = 'blue')
+  }
+
+  rm(idx, color.grp, i, de.data, de.meta)
+  rm(peaks.top, o)
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-chipseq-diffBind-AnnoBar, echo=F, fig.height=5>>=
+
+  #graphics.off()
+  #quartz()
+  plotAnnoBar(list.peaks)
+
+@
+\caption{Differentially binding sites: annotation comparison}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-chipseq-diffBind-plotDistToTss, echo=F, fig.height=5>>=
+
+  #graphics.off()
+  #quartz()
+  plotDistToTSS(list.peaks)
+@
+\caption{Differentially bounded sites: distribution to TSS comparison}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-chipseq-diffBind-KEGG, echo=F, fig.height=5>>=
+
+  genes = lapply(list.peaks, function(i) as.data.frame(i)$geneId)
+  names(genes) = sub("_", "\n", names(genes))
+  compKEGG <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichKEGG",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+  #graphics.off()
+  #quartz()
+  dotplot(compKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis")
+
+  rm(genes, compKEGG, ChIPseekerEnv)
+
+@
+\caption{Differentially binding sites: biological themes comparison}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-chipseq-diffBind-KEGG-02, echo=F, fig.height=5>>=
+
+  genes = lapply(list.peaks_up_down, function(i) as.data.frame(i)$geneId)
+  names(genes) = sub("_", "\n", names(genes))
+  compKEGG <- compareCluster(geneCluster   = genes,
+                         fun           = "enrichKEGG",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+  #graphics.off()
+  #quartz()
+  dotplot(compKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis", font.size=6)
+
+  rm(genes, compKEGG, ChIPseekerEnv)
+
+@
+\caption{Differentially binding sites: biological themes comparison (up and down fold changes)}
+\end{center}
+\end{figure}
+
+
+<<chipseq-save, echo=F>>=
+
+  save.image("../../scratch/cache/tmp-chipseq.RData")
+
+@
+
+
+%%% RNA-seq %%%% ------------------------------------------------------------------------------
+\normalsize
+\subsection{RNA-seq}
+\subsubsection{QC}
+QC and data processing details are in \texttt{multiqc\_report.html} report. Note that given the current study design, with all NBM sequenced in a separate batch, it is not possible to seperate batch effect from group effect. Neither adjusting for batch effect in this case seems reasonable (Figure \ref{fig:batch})
+
+<<rnaseq-setup, echo=F>>=
+
+  rm(list=ls())
+
+  library(edgeR)
+  library(ggplot2)
+  library(scater)
+
+  func.color <- function(inp.group)
+  {
+  if (length(unique((inp.group)))>2) {colors.fav <- cols <- brewer.pal(length(unique(inp.group)), "Set1")
+  }else  {colors.fav <- cols <- brewer.pal(4, "Set1")}
+  group.unique <- unique(inp.group)
+  out.color <- inp.group
+  for (i in 1:length(unique(group.unique))){out.color[inp.group==group.unique[i]]=colors.fav[i]}
+  out.color
+  }
+
+
+  mytheme=theme(panel.background = element_rect(fill = "white"),
+                panel.border = element_rect(colour = "black", fill=NA),
+                panel.grid.minor = element_line(colour="grey", linetype = 'dotted'),
+                panel.grid.major = element_line(colour="grey", linetype = 'dotted'))
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-rnaseq-QC-lanes-pca, echo=F, fig.height=5, fig.width=12, include=T, eval=T>>=
+
+  #rm(list=ls())
+  file.rnaseq_lanes <- "../../DATA/processed/RData/RNA-seq/counts-lanes.txt"
+  file.rnaseq_lanes2condition <- "../../DATA/processed/RData/RNA-seq/counts-lanes-fastq2condition.txt"
+
+  rnaseq.lanes <- read.delim(file.rnaseq_lanes)
+  rnaseq.lanes2condition <- read.delim(file.rnaseq_lanes2condition)
+
+  # PCA
+  pca.data <- as.matrix(rnaseq.lanes)
+  pca <- prcomp(t(pca.data), center=TRUE, scale=FALSE)
+  pca.frame <- data.frame(PC1=pca$x[,1], PC2=pca$x[,2], PC3=pca$x[,3], factor=rnaseq.lanes2condition$condition, id=gsub(".paired", "", colnames(pca.data)))
+
+  plot.rnaseq_lanes_pca12 <- ggplot(pca.frame, aes(PC1,PC2, color=factor))+geom_point(size=4)+xlab("PC1")+ylab("PC2")+theme(legend.title = element_blank(), text = element_text(size=12))+theme(legend.position="right")+mytheme
+
+  plot.rnaseq_lanes_pca12_zoom <- ggplot(pca.frame, aes(PC1,PC2, color=factor))+geom_point(size=4)+xlab("PC1")+ylab("PC2")+theme(legend.title = element_blank(), text = element_text(size=12))+theme(legend.position="right")+xlim(c(-600000, 300000))+mytheme
+  #plot.rnaseq_lanes_pca13 <- ggplot(pca.frame, aes(PC1,PC3, color=factor))+geom_point(size=4)+xlab("PC1")+ylab("PC3")+theme(legend.title = element_blank(), text = element_text(size=12))+theme(legend.position="right")
+
+  #multiplot(plot.rnaseq_lanes_pca12 , plot.rnaseq_lanes_pca12_zoom, cols=2)
+  print(plot.rnaseq_lanes_pca12_zoom)
+  rm(pca.data, pca)#.model, pca.frame, pca.eigs, pca.var)
+
+@
+\caption{PCA scores plot: QC on lanes}
+\end{center}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-rnaseq-QC-batchEffect, echo=F, fig.height=9, fig.width=12, include=T, eval=T>>=
+
+  file.counts <- "../../DATA/processed/RData/RNA-seq/counts-merged.txt"
+  rnaseq.counts <- read.delim(file.counts)
+
+  group.conditions <- rep("AML", length(colnames(rnaseq.counts)))
+  group.conditions[grep("^NBM", colnames(rnaseq.counts))] <- "NBM"
+
+  # Batch 1: AML libraries minus ALBB13137
+  # Batch 2: NBM libraires plus ALBB13137
+  sample.batch <- rep("batch 1", ncol(rnaseq.counts))
+  sample.batch[colnames(rnaseq.counts)=="UPN20"] <- "batch 2"
+  sample.batch[grep("^NBM", colnames(rnaseq.counts))] <- "batch 2"
+  sample.batch <- as.factor(sample.batch)
+
+  npm1 <- c("UPN09", "UPN11", "UPN20")
+  tet2 <- c("UPN16", "UPN17", "UPN18", "UPN19")
+  tet2_npm1 <- c("UPN10", "UPN14", "UPN15")
+
+  group.aml <- rep("AML", length(colnames(rnaseq.counts)))
+  group.aml[grep("^NBM", colnames(rnaseq.counts))] <- "NBM"
+  group.aml[match(npm1, colnames(rnaseq.counts))] <- "NPM1"
+  group.aml[match(tet2, colnames(rnaseq.counts))] <- "TET2"
+  group.aml[match(tet2_npm1, colnames(rnaseq.counts))] <- "TET2_NPM1"
+
+  rnaseq.cds <- DGEList(as.matrix(rnaseq.counts), group=group.conditions)
+
+  #filtering low count reads (keeping rads with at least 1 read per milion in at least 2 samples)
+  rnaseq.cds <- rnaseq.cds[rowSums(1e+06 * rnaseq.cds$counts/expandAsMatrix(rnaseq.cds$samples$lib.size, dim(rnaseq.cds)) > 1) >= 2, ]
+  #dim(rnaseq.cds)
+
+  #detach("package:scater", unload=TRUE)
+  #library(edgeR)
+  ## normalizing data
+  rnaseq.cds <- calcNormFactors(rnaseq.cds, method='TMM')
+  rnaseq.norm <- edgeR::cpm(rnaseq.cds, prior.count=2, log=TRUE)
+
+  # PCA normalized counts
+  pca <- prcomp(t(rnaseq.norm), center=TRUE, scale.=FALSE)
+  pca.frame <- data.frame(PC1=pca$x[,1], PC2=pca$x[,2], PC3=pca$x[,3], factor=group.conditions, id=colnames(rnaseq.counts), batch=sample.batch, condition=group.aml)
+  pca12.grp <- ggplot(pca.frame, aes(PC1,PC2, color=condition, shape=condition))+geom_point(size=4)+xlab("PC1")+ylab("PC2")+theme(legend.title = element_blank(), text = element_text(size=12))+theme(legend.position="right")+stat_ellipse(level=0.75)+scale_colour_brewer(palette = "Set1")+ggtitle("Batch effect")
+  pca12.batch <- ggplot(pca.frame, aes(PC1,PC2, color=batch, shape=condition))+geom_point(size=4)+xlab("PC1")+ylab("PC2")+theme(legend.title = element_blank(), text = element_text(size=12))+theme(legend.position="right")+stat_ellipse(level=0.75)+scale_colour_brewer(palette = "Set1")
+
+  data.batchAdj <- removeBatchEffect(rnaseq.norm, batch=sample.batch)
+  pca <- prcomp(t(data.batchAdj), center=TRUE, scale.=FALSE)
+  pca.frame <- data.frame(PC1=pca$x[,1], PC2=pca$x[,2], PC3=pca$x[,3], factor=group.conditions, id=colnames(rnaseq.counts), batch=sample.batch, condition=group.aml)
+  pca12.grp_adj <- ggplot(pca.frame, aes(PC1,PC2, color=condition, shape=condition))+geom_point(size=4)+xlab("PC1")+ylab("PC2")+theme(legend.title = element_blank(), text = element_text(size=12))+theme(legend.position="right")+stat_ellipse(level=0.75)+scale_colour_brewer(palette = "Set1")+ggtitle("Batch adjusted")
+  pca12.batch_adj <- ggplot(pca.frame, aes(PC1,PC2, color=batch, shape=condition))+geom_point(size=4)+xlab("PC1")+ylab("PC2")+theme(legend.title = element_blank(), text = element_text(size=12))+theme(legend.position="right")+stat_ellipse(level=0.75)+scale_colour_brewer(palette = "Set1")
+
+  multiplot(pca12.grp+mytheme, pca12.batch+mytheme, 
+            pca12.grp_adj+mytheme, pca12.batch_adj+mytheme, cols=2)
+
+@
+\caption{PCA scores plot: batch effect}
+\label{fig:batch}
+\end{center}
+\end{figure}
+
+\subsubsection{Overview}
+<<rnaseq-input, echo=F, results='asis'>>=
+
+  rm(list=ls())
+
+  library(edgeR)
+  library(ggplot2)
+
+  func.color <- function(inp.group)
+  {
+  if (length(unique((inp.group)))>2) {colors.fav <- cols <- brewer.pal(length(unique(inp.group)), "Set1")
+  }else  {colors.fav <- cols <- brewer.pal(4, "Set1")}
+  group.unique <- unique(inp.group)
+  out.color <- inp.group
+  for (i in 1:length(unique(group.unique))){out.color[inp.group==group.unique[i]]=colors.fav[i]}
+  out.color
+  }
+  
+  mytheme=theme(panel.background = element_rect(fill = "white"),
+                panel.border = element_rect(colour = "black", fill=NA),
+                panel.grid.minor = element_line(colour="grey", linetype = 'dotted'),
+                panel.grid.major = element_line(colour="grey", linetype = 'dotted'))
+
+  file.counts <- "../../DATA/processed/RData/RNA-seq/counts-merged.txt"
+  file.counts_annotations <- "../../DATA/processed/RData/RNA-seq/counts-merged-annotation.txt"
+  
+@
+
+<<rnaseq-input-02, echo=F, results='asis', cache=TRUE>>=
+
+  # Reading in data
+  rnaseq.counts <- read.delim(file.counts)
+  rnaseq.counts_annotations <- read.delim(file.counts_annotations)
+  
+  samples.remove <- c("UPN10")
+  idx.remove <- match(samples.remove, colnames(rnaseq.counts))
+  rnaseq.counts <- rnaseq.counts[, -idx.remove]
+
+  # Groupings
+  rnaseq.meta <- data.frame(ID=colnames(rnaseq.counts))
+
+  group.conditions <- rep("AML", length(colnames(rnaseq.counts)))
+  group.conditions[grep("^NBM", colnames(rnaseq.counts))] <- "NBM"
+
+  npm1 <- c("UPN09", "UPN11", "UPN20")
+  tet2 <- c("UPN16", "UPN17", "UPN18", "UPN19")
+  tet2_npm1 <- c("UPN10", "UPN14", "UPN15")
+  group.aml <- rep("AML", length(colnames(rnaseq.counts)))
+  group.aml[grep("^NBM", colnames(rnaseq.counts))] <- "NBM"
+  group.aml[match(npm1, colnames(rnaseq.counts))] <- "NPM1"
+  group.aml[match(tet2, colnames(rnaseq.counts))] <- "TET2"
+  group.aml[match(tet2_npm1, colnames(rnaseq.counts))] <- "TET2_NPM1"
+
+  rnaseq.meta$Factor <- as.factor(group.conditions)
+  rnaseq.meta$Condition <- as.factor(group.aml)
+
+  # Comparison TET2- vs. TET2+
+  group.tet2 <- group.aml
+  group.tet2[which(group.aml=="TET2")] <- "TET2+"
+  group.tet2[which(group.aml=="AML" | group.aml=="NPM1")] <- "TET2-"
+
+  # Comaprison NPM1- vs. NPM1+
+  group.npm1 <- group.aml
+  group.npm1[which(group.aml=="NPM1")] <- "NPM1+"
+  group.npm1[which(group.aml=="AML" | group.aml=="TET2")] <- "NPM1-"
+
+  rnaseq.meta$TET2 <- as.factor(group.tet2)
+  rnaseq.meta$NPM1 <- as.factor(group.npm1)
+
+  rm(group.conditions, group.aml, npm1, tet2, tet2_npm1, group.tet2, group.npm1)
+
+  rnaseq.meta$Factor <- factor(rnaseq.meta$Factor, levels=c("NBM", "AML"))
+  #levels(rnaseq.meta$Factor)
+
+  print(xtable(summary(rnaseq.meta, maxsum = nrow(rnaseq.meta)), caption="Summary of the RNA-seq libraries"),
+        caption.placement = "bottom",
+        size="scriptsize",
+        include.rownames=FALSE,
+        rotate.colnames=FALSE,
+        floating=TRUE,
+        table.placement="H")
+
+  p.thr=0.05
+
+@
+
+
+<<rnaseq-edgeR-norm, echo=F, cache=TRUE>>=
+
+  # Edge-R
+  rnaseq.cds <- DGEList(as.matrix(rnaseq.counts), group=rnaseq.meta$condition)
+
+  #filtering low count reads (keeping rads with at least 1 read per milion in at least 2 samples)
+  rnaseq.cds <- rnaseq.cds[rowSums(1e+06 * rnaseq.cds$counts/expandAsMatrix(rnaseq.cds$samples$lib.size, dim(rnaseq.cds)) > 1) >= 2, ]
+  #dim(rnaseq.cds)
+
+  ## normalizing data
+  rnaseq.cds <- calcNormFactors(rnaseq.cds, method='TMM')
+  rnaseq.norm <- edgeR::cpm(rnaseq.cds, prior.count=2, log=TRUE)
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-rnaseq-overview-pca, echo=F, fig.height=5, fig.width=12>>=
+
+  pca.matrix <- as.matrix(rnaseq.norm)
+  pca.data <- rnaseq.meta
+
+  pca.model <- prcomp(t(pca.matrix), center=TRUE, scale.=FALSE)
+  pca.frame <- data.frame(PC1=pca.model$x[,1], PC2=pca.model$x[,2], PC3=pca.model$x[,3], Factor=pca.data$Factor, Condition=pca.data$Condition)
+  pca.eigs <- pca.model$sdev^2
+  pca.var <- round(pca.eigs / sum(pca.eigs)*100,2)
+
+  plot.rnaseq_pca12 <- ggplot(pca.frame, aes(PC1, PC2, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC2: ", pca.var[2], "% variance", sep=""))+theme(legend.title=element_blank())#+stat_ellipse(level=0.75)
+  plot.rnaseq_pca13 <- ggplot(pca.frame, aes(PC1, PC3, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC3: ", pca.var[3], "% variance", sep=""))+theme(legend.title=element_blank())#+stat_ellipse(level=0.75)
+
+  multiplot(plot.rnaseq_pca12+mytheme, plot.rnaseq_pca13+mytheme, cols=2)
+  rm(pca.matrix, pca.data, pca.model, pca.frame, pca.eigs, pca.var)
+
+@
+\end{center}
+\caption{PCA scores plot on expressed genes, n=\Sexpr{formatC(nrow(rnaseq.norm), big.mark=" ", format="f", digits=0)}}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-rnaseq-overview-heatmap, echo=F, fig.height=12, fig.width=12>>=
+
+  n.top <- 1000
+
+  iqr.data <- rowIQRs(rnaseq.norm)
+  iqr.o <- order(iqr.data, decreasing = TRUE)
+  heatmap.data <- rnaseq.norm[iqr.o[1:n.top],]
+
+  ColSideAnn <- data.frame(Condition=rnaseq.meta$Condition)
+  rownames(ColSideAnn) <- rnaseq.meta$ID
+
+  #graphics.off()
+  #quartz()
+  heatmap3(heatmap.data,
+         showRowDendro=TRUE,
+         ColSideCut=0.5,
+         ColSideAnn=ColSideAnn,
+         ColSideFun=function(x) showAnn(x),
+         ColSideWidth=0.8,
+         RowAxisColors=1,
+         verbose=FALSE,
+         labRow = FALSE)
+
+  rm(heatmap.data, iqr.data, iqr.o, ColSideAnn, n.top)
+
+@
+\end{center}
+\caption{Heatmap for top 1000 genes, based on IQR dispersion measure}
+\end{figure}
+
+\subsubsection{Differential expression}
+
+<<rnaseq-de-aml_vs_nbm, echo=F, eval=T, cache=TRUE>>=
+
+  rnaseq.cds <- DGEList(as.matrix(rnaseq.counts), group=rnaseq.meta$condition)
+
+  #filtering low count reads (keeping rads with at least 1 read per milion in at least 2 samples)
+  rnaseq.cds <- rnaseq.cds[rowSums(1e+06 * rnaseq.cds$counts/expandAsMatrix(rnaseq.cds$samples$lib.size, dim(rnaseq.cds)) > 1) >= 2, ]
+  #dim(rnaseq.cds)
+
+  ## normalizing data
+  rnaseq.cds <- calcNormFactors(rnaseq.cds, method='TMM')
+  rnaseq.norm <- edgeR::cpm(rnaseq.cds, prior.count=2, log=TRUE)
+
+  p.thr <- 0.05
+  my.design <- model.matrix(~ rnaseq.meta$Factor)
+  rnaseq.cds <- estimateDisp(rnaseq.cds, my.design, robust=TRUE)
+  #plotBCV(rnaseq.cds)
+  #print(rnaseq.cds$samples$lib.size * rnaseq.cds$samples$norm.factors)
+
+  #fit <- glmQLFit(rnaseq.cds, my.design, robust=TRUE)
+  #lrt <- glmQLFTest(fit, coef = 2)
+  fit <- glmFit(rnaseq.cds, my.design, robust=TRUE)
+  lrt <- glmLRT(fit, coef = 2)
+  lrt.top <- topTags(lrt, n=Inf, adjust.method="BH")
+  lrt.table <- lrt.top$table
+
+  # Number of down- and up-regulated
+  de.summary <- rbind(t(summary(de <- decideTestsDGE(lrt, lfc=0, p.value=p.thr))), t(summary(de <- decideTestsDGE(lrt, lf=0.5, p.value=p.thr))), t(summary(de <- decideTestsDGE(lrt, lfc=1, p.value=p.thr))))
+  colnames(de.summary) <- c("Down-regulated","Non-significant","Up-regulated")
+  rownames(de.summary) <- c("log2FC 0.0", "log2FC 0.5", "log2FC 1.0")
+  #de.summary
+
+  lrt.aml <- lrt
+  rnaseq.de_aml <- lrt.table
+  rnaseq.de_aml_summary <- de.summary
+
+  # Plot top genes
+  #top.genes <- rownames(head(lrt.table))
+  #idx.match <- match(top.genes, rownames(rnaseq.norm))
+  #table.plot <- rnaseq.norm[idx.match,]
+
+  #head(lrt.table)
+  #boxplot(table.plot[2,] ~ rnaseq.meta$Factor)
+
+  #print(rnaseq.de_aml_summary)
+
+@
+
+<<rnaseq-de-TET2p_vs_TET2m, echo=F, cache=TRUE>>=
+
+  # Comparison TET2- vs. TET2
+  rnaseq.cds <- DGEList(rnaseq.counts, group=rnaseq.meta$TET2)
+  #levels(rnaseq.cds$samples$group)
+
+  #filter & normalize
+  rnaseq.cds <- rnaseq.cds[rowSums(1e+06 * rnaseq.cds$counts/expandAsMatrix(rnaseq.cds$samples$lib.size, dim(rnaseq.cds)) > 1) >= 2, ]
+  #dim(rnaseq.cds)
+
+  rnaseq.cds <- calcNormFactors(rnaseq.cds, method='TMM')
+  rnaseq.norm <- edgeR::cpm(rnaseq.cds, prior.count=2, log=TRUE)
+
+  grp <- as.character(rnaseq.meta$TET2)
+  grp[which(grp=="TET2+")] <- "TET2"
+  grp[grp=="TET2-"] <- "TET2m"
+  grp <- as.factor(grp)
+
+  my.design <- model.matrix(~ 0 + grp)
+  rnaseq.cds <- estimateDisp(rnaseq.cds, my.design, robust=TRUE)
+  #plotBCV(rnaseq.cds)
+  #print(rnaseq.cds$samples$lib.size * rnaseq.cds$samples$norm.factors)
+
+  my.contrast <- makeContrasts(TET2=grpTET2-grpTET2m, levels=my.design)
+
+  #fit <- glmQLFit(rnaseq.cds, my.design, robust=TRUE)
+  #lrt <- glmQLFTest(fit, contrast = my.contrast[,"TET2"])
+  fit <- glmFit(rnaseq.cds, my.design, robust=TRUE)
+  lrt <- glmLRT(fit, contrast = my.contrast[,"TET2"])
+  lrt.top <- topTags(lrt, n=Inf, adjust.method="BH")
+  lrt.table <- lrt.top$table
+  #head(lrt.table)
+  #plotMD(lrt)
+
+  # Number of down- and up-regulated
+  de.summary <- rbind(t(summary(de <- decideTestsDGE(lrt, lfc=0, p.value=p.thr))), t(summary(de <- decideTestsDGE(lrt, lf=0.5, p.value=p.thr))), t(summary(de <- decideTestsDGE(lrt, lfc=1, p.value=p.thr))))
+colnames(de.summary) <- c("Down-regulated","Non-significant","Up-regulated")
+rownames(de.summary) <- c("log2FC 0.0", "log2FC 0.5", "log2FC 1.0")
+  #de.summary
+
+  lrt.tet2 <- lrt
+  rnaseq.de_tet2 <- lrt.table
+  rnaseq.de_tet2_summary <- de.summary
+
+  #print(rnaseq.de_tet2_summary)
+
+@
+
+<<rnaseq-de-NMP1p_vs_NMP1m, echo=F, cache=TRUE>>=
+
+  # Comparison NPM1- vs. NPM1+
+  rnaseq.cds <- DGEList(rnaseq.counts, group=rnaseq.meta$NPM1)
+  #levels(rnaseq.cds$samples$group)
+
+  #filter & normalize
+  rnaseq.cds <- rnaseq.cds[rowSums(1e+06 * rnaseq.cds$counts/expandAsMatrix(rnaseq.cds$samples$lib.size, dim(rnaseq.cds)) > 1) >= 2, ]
+  #dim(rnaseq.cds)
+
+  rnaseq.cds <- calcNormFactors(rnaseq.cds, method='TMM')
+  rnaseq.norm <- edgeR::cpm(rnaseq.cds, prior.count=2, log=TRUE)
+
+  grp <- as.character(rnaseq.meta$NPM1)
+  grp[which(grp=="NPM1+")] <- "NPM1"
+  grp[grp=="NPM1-"] <- "NPM1m"
+  grp <- as.factor(grp)
+
+  my.design <- model.matrix(~ 0 + grp)
+  rnaseq.cds <- estimateDisp(rnaseq.cds, my.design, robust=TRUE)
+  #plotBCV(rnaseq.cds)
+  #print(rnaseq.cds$samples$lib.size * rnaseq.cds$samples$norm.factors)
+
+  my.contrast <- makeContrasts(NPM1=grpNPM1-grpNPM1m, levels=my.design)
+
+  #fit <- glmQLFit(rnaseq.cds, my.design, robust=TRUE)
+  #lrt <- glmQLFTest(fit, contrast = my.contrast[,"TET2"])
+  fit <- glmFit(rnaseq.cds, my.design, robust=TRUE)
+  lrt <- glmLRT(fit, contrast = my.contrast[,"NPM1"])
+  lrt.top <- topTags(lrt, n=Inf, adjust.method="BH")
+  lrt.table <- lrt.top$table
+  #head(lrt.table)
+  #plotMD(lrt)
+
+  # Number of down- and up-regulated
+  de.summary <- rbind(t(summary(de <- decideTestsDGE(lrt, lfc=0, p.value=p.thr))), t(summary(de <- decideTestsDGE(lrt, lf=0.5, p.value=p.thr))), t(summary(de <- decideTestsDGE(lrt, lfc=1, p.value=p.thr))))
+colnames(de.summary) <- c("Down-regulated","Non-significant","Up-regulated")
+rownames(de.summary) <- c("log2FC 0.0", "log2FC 0.5", "log2FC 1.0")
+  #de.summary
+
+  lrt.nmp1 <- lrt
+  rnaseq.de_npm1 <- lrt.table
+  rnaseq.de_npm1_summary <- de.summary
+
+  # # Plot top genes
+  # top.genes <- rownames(head(lrt.table))
+  # idx.match <- match(top.genes, rownames(rnaseq.norm))
+  # table.plot <- rnaseq.norm[idx.match,]
+  #
+  # boxplot(table.plot[3,] ~ grp)
+
+@
+
+<<rnaseq-de-overview-table, echo=F, results='asis', cache=TRUE>>=
+
+  gr1 <- c("NBM", "TET2_minus", "NPM1_minus")
+  gr2 <- c("AML", "TET2", "NPM1")
+  m1 <- c(length(which(rnaseq.meta$Factor=="NBM")), length(which(rnaseq.meta$TET2=="TET2-")), length(which(rnaseq.meta$NPM1=="NPM1-")))
+  m2 <- c(length(which(rnaseq.meta$Factor=="AML")), length(which(rnaseq.meta$TET2=="TET2+")), length(which(rnaseq.meta$NPM1=="NPM1+")))
+
+  rnaseq.de <- data.frame(Group1=gr1, Members1=m1, Group2=gr2, Members2=m2)
+
+  n <- nrow(rnaseq.norm)
+  de.sign <-c(n-rnaseq.de_aml_summary[3,2], n-rnaseq.de_tet2_summary[3,2], n-rnaseq.de_npm1_summary[3,2])
+  de.up <- c(rnaseq.de_aml_summary[3,3], rnaseq.de_tet2_summary[3,3], rnaseq.de_npm1_summary[3,3])
+  de.down <- c(rnaseq.de_aml_summary[3,1], rnaseq.de_tet2_summary[3,1], rnaseq.de_npm1_summary[3,1])
+
+  rnaseq.de$Sign <- de.sign
+  rnaseq.de$FoldUp <- de.up
+  rnaseq.de$FoldDown <- de.down
+
+  print(xtable(rnaseq.de, display = c("s", "s", "d", "s", "d", "d", "d", "d"),
+  caption = "Summary of differential expression results", label="tab:diffExp-overview"), caption.placement = "bottom",
+  size="scriptsize",
+  include.rownames=FALSE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+  rm(gr1, gr2, m1, m2, de.sign, de.up, de.down, n)
+
+@
+
+\begin{figure}[H]
+\begin{center}
+<<fig-rnaseq-de-pca, echo=F, fig.height=5, fig.width=12>>=
+
+  de.aml <- which(decideTestsDGE(lrt.aml, lfc=1, p.value=p.thr)!=0)
+  de.tet2 <- which(decideTestsDGE(lrt.tet2, lfc=1, p.value=p.thr)!=0)
+  de.npm1 <- which(decideTestsDGE(lrt.nmp1, lfc=1, p.value=p.thr)!=0)
+
+  de.sign <- unique(c(de.aml, de.tet2, de.npm1))
+
+  pca.matrix <- as.matrix(rnaseq.norm[de.sign,])
+  pca.data <- rnaseq.meta
+
+  pca.model <- prcomp(t(pca.matrix), center=TRUE, scale.=FALSE)
+  pca.frame <- data.frame(PC1=pca.model$x[,1], PC2=pca.model$x[,2], PC3=pca.model$x[,3], Factor=pca.data$Factor, Condition=pca.data$Condition)
+  pca.eigs <- pca.model$sdev^2
+  pca.var <- round(pca.eigs / sum(pca.eigs)*100,2)
+
+  plot.rnaseq_de_pca12 <- ggplot(pca.frame, aes(PC1, PC2, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC2: ", pca.var[2], "% variance", sep=""))+theme(legend.title=element_blank())#+stat_ellipse(level=0.75)
+  plot.rnaseq_de_pca13 <- ggplot(pca.frame, aes(PC1, PC3, colour=Condition, shape=Condition))+geom_point(size=3)+scale_colour_brewer(palette = "Set1")+xlab(paste("PC1: ", pca.var[1], "% variance", sep="")) + ylab(paste("PC3: ", pca.var[3], "% variance", sep=""))+theme(legend.title=element_blank())#+stat_ellipse(level=0.75)
+
+  multiplot(plot.rnaseq_de_pca12+mytheme, plot.rnaseq_de_pca13+mytheme, cols=2)
+  rm(pca.matrix, pca.data, pca.model, pca.frame, pca.eigs, pca.var)
+
+@
+\end{center}
+\caption{PCA scores plot on differentially expressed genes}
+\end{figure}
+
+
+\begin{figure}[H]
+\begin{center}
+<<fig-rnaseq-de-heatmap, echo=F, fig.height=12, fig.width=12>>=
+
+  n.top <- 1000
+
+  heatmap.data <- rnaseq.norm[de.sign,]
+
+  iqr.data <- rowIQRs(heatmap.data)
+  iqr.o <- order(iqr.data, decreasing = TRUE)
+  heatmap.data <- heatmap.data[iqr.o[1:n.top],]
+
+  ColSideAnn <- data.frame(Condition=rnaseq.meta$Condition)
+  rownames(ColSideAnn) <- rnaseq.meta$ID
+
+  # graphics.off()
+  # quartz()
+  heatmap3(heatmap.data,
+         showRowDendro=TRUE,
+         ColSideCut=0.5,
+         ColSideAnn=ColSideAnn,
+         ColSideFun=function(x) showAnn(x),
+         ColSideWidth=0.8,
+         RowAxisColors=1,
+         verbose=FALSE,
+         labRow = FALSE)
+
+  rm(heatmap.data, iqr.data, iqr.o, ColSideAnn, n.top)
+
+@
+\end{center}
+\caption{Heatmap for top 1000 differentially expressed genes, based on IQR dispersion measure}
+\end{figure}
+
+\begin{figure}[H]
+\begin{center}
+<<fig-rnaseq-de-venn, echo=F, fig.height=4, fig.width=4, include=TRUE>>=
+library(VennDiagram)
+
+list.venn <- list(NBM_AML=de.aml, TET2=de.tet2, NPM1=de.npm1)
+col.venn <- brewer.pal(3, "Set1")
+
+#graphics.off()
+#quartz()
+plot.venny <- venn.diagram(list.venn, filename=NULL, fill=c(col.venn[1], col.venn[2], col.venn[3]), category.names = c("NBM vs. AML", "TET2- vs. TET2+", "NPM1- vs. NPM1+"), cat.pos = c(270, 45, 180), cat.dist = c(-0.1, -0.05, -0.05))
+
+grid.draw(plot.venny)
+
+rm(col.venn, list.venn)
+
+@
+\end{center}
+\caption{Venn diagram: differentially expressed genes}
+\end{figure}
+
+
+<<rnaseq-de-topHits, echo=F, results='asis'>>=
+
+  n.top <- 5
+  #de.sign <- c(rownames(rnaseq.de_aml)[1:n.top],
+              #rownames(rnaseq.de_tet2)[1:n.top],
+              #rownames(rnaseq.de_npm1)[1:n.top])
+  #idx.sign <- match(de.sign, rownames(rnaseq.norm))
+
+  idx <- c(1:5)
+  de.top <- rbind(rnaseq.de_aml[1:n.top, idx], rnaseq.de_tet2[1:n.top, idx], rnaseq.de_npm1[1:n.top, idx])
+
+  idx <- c(3,4)
+  idx.match <- match(rownames(de.top), rnaseq.counts_annotations[,1])
+  de.top <- cbind(de.top, rnaseq.counts_annotations[idx.match, idx])
+
+  de.top$Cmp <- c(rep("AML_vs_NBM", n.top), rep("TET2m_vs_TET2", n.top), rep("NPM1m_vs_NPM1", n.top))
+
+
+  print(xtable(de.top, display = c("s", "f", "f", "E", "E", "E", "d", "s", "s"), align=rep("r", 9),
+  caption = "Top differentially expressed genes", label="tab:de-top"), caption.placement = "bottom",
+  size="scriptsize",
+  include.rownames=TRUE,
+  rotate.colnames=FALSE,
+  floating=TRUE,
+  table.placement="H")
+
+  rm(idx, idx.match)
+
+@
+
+<<fig-de-de-boxplots, echo=F, fig.height=12, fig.width=12, eval=T>>=
+
+  idx <- match(rownames(de.top), rownames(rnaseq.norm))
+  de.data <- rnaseq.norm[idx,]
+  de.meta <- rnaseq.meta
+  color.gr <- func.color(as.character(rnaseq.meta$Condition))
+
+  #top.deData <- data.batchAdjExt[match(top.de, rownames(data.batchAdj)),]
+  #top.fcData <- data.batchAdjExt[match(top.fc, rownames(data.batchAdj)),]
+
+  #graphics.off()
+  #quartz()
+  par(mfrow=c(3,5))
+  for (i in 1:(n.top*3))
+  {
+    boxplot(de.data[i,]~ de.meta$Condition, col=unique(color.gr), las=2, main=rownames(de.data)[i], cex.main=0.9)
+    stripchart(de.data[i,]~de.meta$Condition, vertical = TRUE, method = "jitter", add = TRUE, pch = 20, col = 'blue')
+  }
+
+  rm(idx, color.grp, i, de.data, de.meta)
+
+@
+
+<<fig-de-diffBind-KEGG, echo=F, fig.height=10, fig.width=12, eval=T>>=
+
+  p.thr <- 0.05
+  fc.thr <- 1
+
+  inp.de <- lrt.aml
+  inp.annotation <- rnaseq.counts_annotations
+
+  func.entrezID <- function(inp.de, inp.annotation)
+  {
+
+    de.summary <-  decideTestsDGE(inp.de, lfc=fc.thr, p.value=p.thr)
+
+    genes.up <- rownames(de.summary)[which(de.summary==1)]
+    genes.up <- inp.annotation$entrezgene[match(genes.up, inp.annotation[,1])]
+    genes.up <- base::unique(genes.up)
+
+    genes.down <- rownames(de.summary)[which(de.summary==1)]
+    genes.down <- inp.annotation$entrezgene[match(genes.down, inp.annotation[,1])]
+    genes.down <- base::unique(genes.down)
+
+      genes.out <- list(up=genes.up, down=genes.down)
+      genes.out
+  }
+
+  genes.aml <- func.entrezID(lrt.aml, rnaseq.counts_annotations)
+  genes.tet2 <- func.entrezID(lrt.tet2, rnaseq.counts_annotations)
+  genes.npm1 <- func.entrezID(lrt.nmp1, rnaseq.counts_annotations)
+
+  genes.list <- list(AML_down=genes.aml$down, AML_up=genes.aml$up, TET2_down=genes.tet2$down,
+                     TET2_up=genes.tet2$up, NPM1_down=genes.npm1$down, NPM1_up=genes.npm1$up)
+
+
+  compKEGG <- compareCluster(geneCluster   = genes.list,
+                         fun           = "enrichKEGG",
+                         pvalueCutoff  = 0.05,
+                         pAdjustMethod = "BH")
+
+  # compGO <- compareCluster(geneCluster   = genes.list,
+  #                        fun           = "enrichDO",
+  #                        pvalueCutoff  = 0.05,
+  #                        pAdjustMethod = "BH")
+
+  #graphics.off()
+  #quartz()
+  dotplot(compKEGG, showCategory = 15, title = "KEGG Pathway Enrichment Analysis", font.size=10)
+
+  rm(genes.list, genes.aml, genes.tet2, genes.npm1, inp.de, inp.option)
+
+@
+
+<<rnaseq-save, echo=F>>=
+
+  #save.image("../../scratch/cache/tmp-rnaseq.RData")
+
+@
+
+<<chipseq-annotate-all-peaks, echo=F, eval=F>>=
+  
+  rm(list=ls())
+  load("../../scratch/cache/tmp-chipseq.RData")
+  
+  txdb <- TxDb.Hsapiens.UCSC.hg38.knownGene
+  chipseq.peaks_annotate <- annotatePeak(addchr(chipseq.peaks), tssRegion=c(-3000, 3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+  
+  save.image("../../scratch/cache/tmp-chipseq.RData")
+  
+@
+
+% 
+% \subsection{Integrative analyses}
+% 
+% <<integrate-setup, echo=F, cache=F>>=
+%   
+%   rm(list=ls())
+%   
+%   library(GenomicRanges)
+%   library(ChIPseeker)
+%   library(xtable)
+%   library(edgeR)
+%   library(ggplot2)
+%   library(scater)
+% 
+% @
+% 
+% 
+% <<integrate-input, echo=F, cache=F>>=
+% 
+%   load("../../scratch/cache/tmp-epic.RData")
+%   load("../../scratch/cache/tmp-chipseq.RData")
+%   load("../../scratch/cache/tmp-rnaseq.RData")
+%   
+%   peaks.aml <- peaks.nbm
+%   peaks.aml_annotated <- peaks.nbm_annotated
+%   
+%   rm(compKEGG, data.batchAdj, de.summary, de.top, fit, inp.annotation, lrt, my.contrast, my.design, de.sign, lrt.table, lrt.top)
+%   rm(pca, pca.frame, pca12.batch, pca12.batch_adj, color.gr, de, idx.remove, n.top, p.thr)
+%   rm(dmp.probes, fc.thr, group.aml, group.conditions, grp, npm1, peaks.sign, samples.remove, tet2, tet2_npm1, func.entrezID)
+%   rm(peaks.nbm, peaks.nbm_annotated)
+%   
+% @
+% 
+% <<integrative-meta, echo=F, results='asis', cache=F>>=
+% 
+%   # epic.meta
+%   # chipseq.meta
+%   # rnaseq.meta
+%   
+%   samples.id <- sort(unique(c(as.character(epic.meta$ID), 
+%                         as.character(chipseq.meta$ID),
+%                         as.character(rnaseq.meta$ID))))
+%   
+%   int.meta <- data.frame(ID=samples.id)
+%   int.meta$Factor="AML"
+%   int.meta$Factor[grep("^NBM", samples.id)] <- "NBM"
+%   
+%   int.meta$Condition <- "NBM"
+%   int.meta$EPIC=0
+%   int.meta$ChIPseq=0
+%   int.meta$RNAseq=0
+%   
+%   int.meta$EPIC[match(epic.meta$ID, int.meta$ID)] <- 1
+%   int.meta$ChIPseq[match(chipseq.meta$ID, int.meta$ID)] <- 1
+%   int.meta$RNAseq[match(rnaseq.meta$ID, int.meta$ID)] <- 1
+%   
+%   samples.aml <- c("UPN01", "UPN02", "UPN03", "UPN08", "UPN13")
+%   samples.npm1 <- c("UPN09", "UPN11", "UPN20")
+%   samples.tet2 <- c("UPN16", "UPN17", "UPN18", "UPN19")
+%   samples.tet2_npm1 <- c("UPN14", "UPN15")
+%   
+%   int.meta$Condition[match(samples.aml, int.meta$ID)] <- "AML"
+%   int.meta$Condition[match(samples.npm1, int.meta$ID)] <- "NPM1"
+%   int.meta$Condition[match(samples.tet2, int.meta$ID)] <- "TET2"
+%   int.meta$Condition[match(samples.tet2_npm1, int.meta$ID)] <- "TET2_NPM1"
+%   
+%   rws <- seq(1, (nrow(int.meta)), by = 2)
+%   col <- rep("\\rowcolor[gray]{0.95}", length(rws))
+%   print(xtable(int.meta, caption = "Available data for integrative analyses", align = c("l", "l", "c", "c", "c", "c", "c"), display = c("s", "s", "d", "d", "d", "d", "d"),  label="tab:int"), caption.placement = "bottom",
+%    size="scriptsize",
+%   include.rownames=FALSE,
+%   rotate.colnames=FALSE,
+%   floating=TRUE,
+%   table.placement="H",
+%   booktabs = TRUE,
+%   add.to.row = list(pos = as.list(rws), command = col))
+%   
+%   rm(rws, col, samples.id)
+% 
+%   
+% @
+% 
+% <<fig-integrative-pca, echo=F, fig.height=16, fig.width=12>>=
+% 
+%   plot.epic_pca12 <- plot.epic_pca12 + ggtitle("EPIC")+mytheme
+%   plot.chipseq_pca12 <- plot.chipseq_pca12 + ggtitle("ChIP-seq")+mytheme
+%   plot.rnaseq_pca12 <- plot.rnaseq_pca12 + ggtitle("RNA-seq")+mytheme
+% 
+%   plot.epic_de_pca12 <- plot.epic_de_pca12 + ggtitle("EPIC (DMP)")+mytheme
+%   plot.chipseq_de_pca12 <- plot.diffBind_pca12 + ggtitle("ChIP-seq (diffBind)")+mytheme
+%   plot.rnaseq_de_pca12 <- plot.rnaseq_de_pca12 + ggtitle("RNA-seq (DE)")+mytheme
+% 
+%   multiplot(plot.epic_pca12, plot.chipseq_pca12, plot.rnaseq_pca12,
+%             plot.epic_de_pca12, plot.chipseq_de_pca12, plot.rnaseq_de_pca12, cols=2)
+% 
+% @
+% 
+% <<int-de-summary, echo=F, results='asis'>>=
+%   
+%   print(xtable(epic.de, display = c("s", "s", "d", "s", "d", "d", "d", "d"),
+%   caption = "Summary of differential methylation (DMP) results", label="tab:dmp-ov"), caption.placement = "bottom",
+%   size="scriptsize",
+%   include.rownames=FALSE,
+%   rotate.colnames=FALSE,
+%   floating=TRUE,
+%   table.placement="H")
+% 
+%   print(xtable(chipseq.de, display = c("s", "s", "d", "s", "d", "d", "d", "d", "d", "d"),
+%   caption = "Summary of differentially binding results", label="tab:diffBind-ov"), caption.placement = "bottom",
+%   size="scriptsize",
+%   include.rownames=FALSE,
+%   rotate.colnames=FALSE,
+%   floating=TRUE,
+%   table.placement="H")
+% 
+%   print(xtable(rnaseq.de, display = c("s", "s", "d", "s", "d", "d", "d", "d"),
+%   caption = "Summary of differential expression results", label="tab:diffExp-ov"), caption.placement = "bottom",
+%   size="scriptsize",
+%   include.rownames=FALSE,
+%   rotate.colnames=FALSE,
+%   floating=TRUE,
+%   table.placement="H")
+%   
+% @
+% 
+% \subsubsection{AML vs. NBM}
+% 
+% <<int-nbm-vs-aml-tf-meth-loci-overlap, echo=F, cache=FALSE, eval=T>>=
+%   
+%   # Input
+%   peaks.cmp <- peaks.aml
+%   dmp.cmp <- dmp.aml
+%   
+%   # Find diffBind peaks that have overlapping DMPs
+%   
+%   # ChIP-seq
+%   #chipseq.peaks
+%   #chipseq.peaks_annotate
+%   
+%   # DMPs
+%   #head(epic.betaNorm)
+%   #head(epic.betaNormAnnotated)
+%   #head(dmp.cmp)
+%   
+%   # DMP probes regions
+%   dmp.probes <- match(rownames(dmp.cmp), rownames(epic.betaNormAnnotated))
+%   dmp.probes <- epic.betaNormAnnotated[dmp.probes, 1:10]
+%   dmp.probes$seqnames <- as.numeric(gsub("chr", "", dmp.probes$seqnames))
+% 
+%   # DiffBind loci regions
+%   gr <- peaks.cmp
+%   diffBind.loci<- data.frame(seqnames=seqnames(gr),
+%                         starts=start(gr)-1,
+%                         ends=end(gr),
+%                         names=c(rep(".", length(gr))),
+%                         scores=c(rep(".", length(gr))),
+%                         strands=strand(gr))
+%   rownames(diffBind.loci) <- names(gr)
+%   rm(gr)
+%   
+%   # Occupancy matrix based on peaks
+%   peaks.occupancy <- data.frame(chipseq.peaks)
+%   rownames(peaks.occupancy) <- paste(peaks.occupancy$seqnames, ":", peaks.occupancy$start, "-", peaks.occupancy$end, sep="")
+% 
+%   # Occpancy matrix based on annotated peaks
+%   peaks.occupancyAnnotate <- data.frame(chipseq.peaks_annotate)
+%   rownames(peaks.occupancyAnnotate) <- paste(peaks.occupancyAnnotate$geneChr, ":", peaks.occupancyAnnotate$start, "-", peaks.occupancyAnnotate$end, sep="")
+%   
+%   # Find diffBind loci that overlapp with at least one DMP probe
+%   no.DMP <- c()
+%   for (i in 1:nrow(diffBind.loci))
+%   {
+%     idx.dmp <- which(dmp.probes$seqnames==diffBind.loci$seqnames[i] & dmp.probes$start > diffBind.loci$starts[i] & dmp.probes$start < diffBind.loci$ends[i])
+%     no.DMP[i] <- length(idx.dmp)
+%     #if ((i %% 100)==0){print (i)}
+%   }
+%   diffBind.lociDMP <- diffBind.loci[no.DMP!=0,]
+%   rm(i, idx.dmp)
+%   
+%   #head(diffBind.lociDMP)
+% 
+% @
+% 
+% <<int-nbm-vs-aml-tf-meth-loci-overlap-add-indecies, echo=F, cache=FALSE, eval=T>>=
+%   
+%   # For each diffBind-DMP loci report (if multiple, concatenate)
+%   # - seqnames, starts, ends
+%   # - index to chipseq.peaks occupancy values
+%   # - index to chipseq.peaks annotated regions
+%   # - index to beta matrix
+%   # - cg name
+%   c.seqnames <- c.start <- c.end <- c()
+%   c.idxOccupancy <- c.idxOccupancyAnnotated <- c.idxBeta <- c.cg <- c()
+%   for (i in 1:nrow(diffBind.lociDMP))
+%   {
+%         idx.dmp <- which(dmp.probes$seqnames==diffBind.lociDMP$seqnames[i] & dmp.probes$start >= diffBind.lociDMP$starts[i] & dmp.probes$start <= diffBind.lociDMP$ends[i])
+% 
+%         c.seqnames <- c(c.seqnames, rep(diffBind.lociDMP$seqnames[i], length(idx.dmp)))
+%         c.start <- c(c.start, rep(diffBind.lociDMP$starts[i], length(idx.dmp)))
+%         c.end <- c(c.end, rep(diffBind.lociDMP$ends[i], length(idx.dmp)))
+%         
+%         c.idxOccupancy <- c(c.idxOccupancy, rep(as.numeric(rownames(diffBind.lociDMP)[i]), length(idx.dmp)))
+%         
+%         tmp.match <- match(rownames(peaks.occupancy)[as.numeric(rownames(diffBind.lociDMP)[i])], rownames(peaks.occupancyAnnotate))
+%         if (length(tmp.match)>0)
+%         {
+%           c.idxOccupancyAnnotated <- c(c.idxOccupancyAnnotated, rep(tmp.match[1], length(idx.dmp)))
+%         }
+%         
+%         #c.idxBeta <- c(c.idxBeta, )
+%         c.cg <- c(c.cg, rownames(dmp.probes)[idx.dmp])
+%   }
+%   c.idxBeta <- match(c.cg, rownames(epic.betaNorm))
+% 
+%   # Pointer to matrix occupancy (all peaks) and matrix beta (all probes)
+%   p.diffBindDMP <- data.frame(seqnames=c.seqnames, starts=c.start, ends=c.end, loci=paste("chr", c.seqnames, ":", c.start, "-", c.end, sep=""), idxOcc=c.idxOccupancy, idxOccAnn=c.idxOccupancyAnnotated, cg=c.cg, idxCg=c.idxBeta)
+% 
+%   rm(idx.dmp, c.seqnames, c.start, c.end, c.idxOccupancy, c.idxOccupancyAnnotated, c.idxBeta, c.cg, tmp.match)
+%   
+%   #head(p.diffBindDMP[,1:8])
+%   
+% @
+% 
+% <<int-meth-tf-correlation, echo=F, include=TRUE, results='asis', cache=FALSE, eval=T>>=
+% 
+%   # Common samples
+%   idx.common<- match(intersect(int.meta$ID[int.meta$EPIC==1], int.meta$ID[int.meta$ChIPseq==1]), int.meta$ID)
+%   samples.common <- int.meta$ID[idx.common]
+%   rm(idx.common)
+% 
+%   matrix.beta <- epic.betaNorm[, match(samples.common, colnames(epic.betaNorm))]
+%   matrix.occupancy <- as.matrix(peaks.occupancy[, match(samples.common, colnames(peaks.occupancy))])
+% 
+%   c.cor <- c()
+%   c.corPvalue <- c()
+%   for (i in 1:nrow(p.diffBindDMP))
+%   {
+%     c.cor[i] <- cor(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+%     c.corTest <- cor.test(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+%     c.corPvalue[i] <-c.corTest$p.value
+%   }
+% 
+%   c.corQvalue <- p.adjust(c.corPvalue, method = "fdr")
+%   p.diffBindDMP$OccMeth.cor <- c.cor
+%   p.diffBindDMP$OccMeth.pval <- c.corPvalue
+%   p.diffBindDMP$OccMeth.lfdr <- c.corQvalue
+% 
+%   # Correlation significance and sign
+%   idx.sign <- which(p.diffBindDMP$OccMeth.lfdr<0.1)
+%   p.diffBindDMP$OccMeth.cor_sign <- 0
+%   p.diffBindDMP$OccMeth.cor_sign[idx.sign] <- 1
+%   p.diffBindDMP$OccMeth.cor_direction <- "Positive"
+%   p.diffBindDMP$OccMeth.cor_direction[p.diffBindDMP$OccMeth.cor<0] <- "Negative"
+%   p.diffBindDMP$OccMeth.cor2 <- 0
+%   p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Postive"] <- 1
+%   p.diffBindDMP$OccMeth.cor2[p.diffBindDMP$OccMeth.cor_direction=="Negative"] <- -1
+%   p.diffBindDMP$OccMeth.cor2[!(p.diffBindDMP$OccMeth.lfdr<0.1)] <- 0
+%   rm(idx.sign, c.cor, c.corTest, c.corPvalue, i)
+% 
+%   # Occupancy change (up or down)
+%   tmp.idx <- match(p.diffBindDMP$idxOcc, names(peaks.cmp))
+%   p.diffBindDMP$OccFC <- (-1)*peaks.cmp$Fold[tmp.idx]
+%   p.diffBindDMP$OccFC.direction <- 1
+%   p.diffBindDMP$OccFC.direction[p.diffBindDMP$OccFC<0] <- (-1)
+%   rm(tmp.idx)
+% 
+%   #p.diffBindDMP$regions <- paste(p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+%   #p.diffBindDMPsig <- p.diffBindDMP[idx.sign,]
+%   
+%   head(p.diffBindDMP)
+% 
+% 
+% 
+% @
+% 
+% <<int-meth-tf-add-rnaseq, echo=F, eval=F>>=
+%   
+%   # For each overlapping diffBind loci with DMP probe add distance to nearest gene and DE statistics for that gene
+%   rnaseq.cmp <- rnaseq.de_aml
+%   lrt.cmp <- lrt.aml
+%   fc.thr=1
+%   p.thr=0.05
+%   
+%   #head(peaks.occupancyAnnotate)
+%   p.diffBindDMP$distanceToTss <- peaks.occupancyAnnotate$distanceToTSS[p.diffBindDMP$idxOccAnn]
+%   p.diffBindDMP$ENSEMBL <- peaks.occupancyAnnotate$ENSEMBL[p.diffBindDMP$idxOccAnn]
+%   p.diffBindDMP$SYMBOL <- peaks.occupancyAnnotate$SYMBOL[p.diffBindDMP$idxOccAnn]
+%   p.diffBindDMP$GENENAME <- peaks.occupancyAnnotate$GENENAME[p.diffBindDMP$idxOccAnn]
+%   
+%   # add index to rnaseq.norm matrix
+%   idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(rnaseq.norm))
+%   p.diffBindDMP$exp.idx <- idx.match
+% 
+%   # add DE information
+%   idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(rnaseq.cmp))  
+%   p.diffBindDMP$expr.logFC <- rnaseq.cmp$logFC[idx.match]
+%   p.diffBindDMP$expr.FDR <- rnaseq.cmp$FDR[idx.match]
+%   
+%   # add DE sign and directions
+%   
+%   de <-  decideTestsDGE(lrt.cmp, lfc=fc.thr, p.value=p.thr)
+%   
+%   idx.match <- match(p.diffBindDMP$ENSEMBL, rownames(de))
+%   p.diffBindDMP$expr.sign <- de[idx.match,1]
+%   
+%   rm(de, idx.match)
+%   
+%   head(p.diffBindDMP)
+%   
+% @
+% 
+% 
+% <<int-save-aml-vs-nbm, echo=F, eval=F>>=
+%   dir.save="../../Results/3696-report-integrative/"
+%   file.save <- paste(dir.save, "TABLE-int-AML-vs-NBM.txt", sep="")  
+%   write.table(p.diffBindDMP, file.save, sep="\t", quote=F)
+% 
+% @
+% 
+% 
+% <<int-group-stats, echo=F, eval=F>>=
+% 
+%   int.profiles <- data.frame(OccMeth=as.factor(p.diffBindDMP$OccMeth.cor2), OccFC=as.factor(p.diffBindDMP$OccFC.direction), Expr=as.factor(p.diffBindDMP$expr.sign))
+%   dim(unique(int.profiles))
+%   int.profilesU <- unique(int.profiles)
+% 
+%   no.counts <- c()
+%   for (i in 1:nrow(int.profilesU))
+%   {
+%   
+%     idx <- which(int.profiles[,1]==int.profilesU[i,1] & int.profiles[,2]==int.profiles[i,2] & int.profiles[,3]==int.profilesU[i,3])
+%     no.counts[i] <- length(idx)
+%       
+%   }
+% 
+%   int.profilesU$counts <- no.counts
+%   rm(no.counts)
+%   
+% @
+% 
+% 
+% <<int-plots, echo=F, eval=F>>=
+%   dir.save <- "../../Results/3696-report-integrative/fig-int-aml-vs-nbm/"
+%   
+%   # Plots for all the regions
+%   idx <- match(samples.common, int.meta$ID)
+%   inp.groups <- int.meta$Factor[idx]
+%   
+%   plot.loci <- paste("chr", p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+%   plot.gene <-  paste(p.diffBindDMP$SYMBOL, "@", p.diffBindDMP$ENSEMBL, sep="")
+%   plot.profie <- paste("Occ-Meth:", p.diffBindDMP$OccMeth.cor2, ", Occ FC:", p.diffBindDMP$OccFC.direction, ", Expr:", p.diffBindDMP$expr.sign, sep="")
+%   plot.distance <- paste("distanceToTSS:", p.diffBindDMP$distanceToTss)
+%   
+%   for (i in 1:nrow(p.diffBindDMP))
+%   {
+%     
+%     v.occupancy <- matrix.occupancy[p.diffBindDMP$idxOcc[i],]
+%     v.meth <- matrix.beta[p.diffBindDMP$idxCg[i],]
+%     v.expr <- rnaseq.norm[p.diffBindDMP$exp.idx[i],]
+%     
+%     #v.exprGroups <- rnaseq.meta$Factor
+%     
+%     tmp.data <- data.frame(methylation=v.meth, occupancy=v.occupancy)
+%     tmp.data$group <- inp.groups
+%     g1 <- ggplot(tmp.data, aes(x=methylation, y=occupancy))+geom_point()+geom_smooth(method='lm', formula=y~x)+ggtitle(p.diffBindDMP$regions[i])+ggtitle(plot.loci[i])
+%     g2 <- ggplot(tmp.data, aes(x=methylation, y=occupancy, color=group, shape=group))+geom_point()+scale_colour_brewer(palette = "Set1")+theme(legend.title=element_blank())+theme(legend.position="top")+ggtitle(plot.profie[i])
+%     
+%     tmp.dataExp <- data.frame(expression=v.expr, factor=rnaseq.meta$Factor, condition=rnaseq.meta$Condition)
+%     g3 <- ggplot(tmp.dataExp, aes(x=factor, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.name2[i])
+%     g4 <- ggplot(tmp.dataExp, aes(x=condition, y=expression))+geom_boxplot()+geom_dotplot(binaxis='y', stackdir='center', dotsize=0.8)+mytheme+ggtitle(plot.distance[i])
+%     
+%     plot.save <- paste(dir.save, "int-", i, ".pdf", sep="")
+%     pdf(plot.save)
+%     multiplot(g1+mytheme, g2+mytheme,
+%               g3, g4,cols=2)
+%     dev.off()
+%     
+%   }
+%   
+%   rm(v.occupancy, v.meth, v.expr, tmp.data, tmp.dataExp, g1, g2, g3, g4, idx, inp.groups)
+%   rm(plot.loci, plot.profie, plot.gene, plot.distance)
+% 
+% @
+% 
+% 
+% 
+% 
+% 
+% % 
+% % <<int-meth-tf-loci-statistics, echo=F, results='asis', cache=FALSE, eval=F>>=
+% % 
+% %   # Number of overlapping diffBind loci with DMP
+% %   summary.noDMP <- data.frame(loci=summary(as.factor(no.DMP)))
+% %   rownames(summary.noDMP) <- paste("DMP", rownames(summary.noDMP))
+% % 
+% %   print(xtable(summary.noDMP, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes", label="tab:diffBind-dmp-01"), caption.placement = "bottom",
+% %         size="scriptsize",
+% %         include.rownames=TRUE,
+% %         rotate.colnames=FALSE,
+% %         floating=TRUE,
+% %         table.placement="H")
+% % 
+% %   # Distribution over chromosomes
+% %   o <- c(1:22, "X", "Y")
+% %   loci.summary <- table(no.DMP[no.DMP!=0], diffBind.loci$seqnames[no.DMP!=0])
+% %   idx.o <- match(o, colnames(loci.summary))
+% %   loci.summary <- loci.summary[, idx.o]
+% %   rownames(loci.summary) <- paste("DMP", rownames(loci.summary))
+% % 
+% %   print(xtable(loci.summary, caption = "Summary of differentially bounded loci with overlapping differentially methylated probes: distribution over chromosomes", label="tab:diffBind-dmp-02"), caption.placement = "bottom",
+% %         size="scriptsize",
+% %         include.rownames=TRUE,
+% %         rotate.colnames=FALSE,
+% %         floating=TRUE,
+% %         table.placement="H")
+% % 
+% %   rm(loci.summary, o, idx.o,  summary.noDMP, no.DMP)
+% % 
+% % @
+% % 
+% % <<int-meth-tf-correlation, echo=F, include=TRUE, results='asis', cache=FALSE>>=
+% % 
+% %   # Common samples
+% %   idx.common<- match(intersect(int.meta$ID[int.meta$EPIC==1], int.meta$ID[int.meta$ChIPseq==1]), int.meta$ID)
+% %   samples.common <- int.meta$ID[idx.common]
+% %   
+% %   matrix.beta <- epic.betaNorm[, match(samples.common, colnames(epic.betaNorm))]
+% %   matrix.occupancy <- chipseq.occupancy[, match(samples.common, colnames(chipseq.occupancy))]
+% %   
+% % 
+% %   c.cor <- c()
+% %   c.corPvalue <- c()
+% %   for (i in 1:nrow(p.diffBindDMP))
+% %   {
+% %     c.cor[i] <- cor(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+% %     c.corTest <- cor.test(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],], method = "spearman")
+% %     c.corPvalue[i] <-c.corTest$p.value
+% %   }
+% % 
+% %   c.corQvalue <- p.adjust(c.corPvalue, method = "fdr")
+% %   p.diffBindDMP$cor <- c.cor
+% %   p.diffBindDMP$pval <- c.corPvalue
+% %   p.diffBindDMP$lfdr <- c.corQvalue
+% % 
+% %   idx.sign <- which(p.diffBindDMP$lfdr<0.1)
+% %   p.diffBindDMP$sign <- 0
+% %   p.diffBindDMP$sign[idx.sign] <- 1
+% %   p.diffBindDMP$corSign <- "Positive"
+% %   p.diffBindDMP$corSign[p.diffBindDMP$cor<0] <- "Negative"
+% % 
+% %   #head(peaks.aml_nbm)
+% %   #head(p.diffBindDMP)
+% %   #plot(matrix.beta[p.diffBindDMP$idxCg[i],], matrix.occupancy[p.diffBindDMP$idxOcc[i],])
+% %   
+% %   tmp.idx <- match(p.diffBindDMP$idxOcc, names(peaks.nbm))
+% %   p.diffBindDMP$Fold <- peaks.nbm$Fold[tmp.idx]
+% %   p.diffBindDMP$FoldSign <- "Up"
+% %   p.diffBindDMP$FoldSign[p.diffBindDMP$Fold<0] <- "Down"
+% % 
+% %   p.diffBindDMP$regions <- paste(p.diffBindDMP$seqnames, ":", p.diffBindDMP$starts, "-", p.diffBindDMP$ends, sep="")
+% % 
+% %   p.diffBindDMPsig <- p.diffBindDMP[idx.sign,]
+% % 
+% %   #summary(as.factor(p.diffBindDMP$corSign))
+% % 
+% %   rm(c.cor, c.corTest, i, tmp.idx)
+% % 
+% %   no.sign <- data.frame(all=nrow(p.diffBindDMP), sign=table(p.diffBindDMP$sign)[2], not=table(p.diffBindDMP$sign)[1])
+% %   rownames(no.sign) <- "loci"
+% %   print(xtable(no.sign, caption = "Summary of differentially bounded loci correlated with overlapping DMP", label="tab:meth-tf-cor"), caption.placement = "bottom",
+% %         size="scriptsize",
+% %         include.rownames=TRUE,
+% %         rotate.colnames=FALSE,
+% %         floating=TRUE,
+% %         table.placement="H")
+% % 
+% % 
+% %   no.sign <- table(p.diffBindDMPsig$corSign, p.diffBindDMPsig$FoldSign)
+% %   colnames(no.sign) <- c("AML down", "AML up")
+% % 
+% %     print(xtable(no.sign, caption = "Summary of differentially bounded loci correlated with overlapping DMP: including AML effect and correlation sign", label="tab:meth-tf-cor-AML-effect"), caption.placement = "bottom",
+% %         size="scriptsize",
+% %         include.rownames=TRUE,
+% %         rotate.colnames=FALSE,
+% %         floating=TRUE,
+% %         table.placement="H")
+% % 
+% % 
+% % @
+% % 
+% % 
+% % 
+% % 
+% 
+% 
+% 
+% 
+% <<>>=
+%   #summary(as.factor(p.diffBindDMP$corSign))
+% 
+%   #rm(c.cor, c.corTest, i, tmp.idx)
+% 
+%   # no.sign <- data.frame(all=nrow(p.diffBindDMP), sign=table(p.diffBindDMP$sign)[2], not=table(p.diffBindDMP$sign)[1])
+%   # rownames(no.sign) <- "loci"
+%   # print(xtable(no.sign, caption = "Summary of differentially bounded loci correlated with overlapping DMP", label="tab:meth-tf-cor"), caption.placement = "bottom",
+%   #       size="scriptsize",
+%   #       include.rownames=TRUE,
+%   #       rotate.colnames=FALSE,
+%   #       floating=TRUE,
+%   #       table.placement="H")
+% 
+% 
+%   # no.sign <- table(p.diffBindDMPsig$corSign, p.diffBindDMPsig$FoldSign)
+%   # colnames(no.sign) <- c("AML down", "AML up")
+%   # 
+%   #   print(xtable(no.sign, caption = "Summary of differentially bounded loci correlated with overlapping DMP: including AML effect and correlation sign", label="tab:meth-tf-cor-AML-effect"), caption.placement = "bottom",
+%   #       size="scriptsize",
+%   #       include.rownames=TRUE,
+%   #       rotate.colnames=FALSE,
+%   #       floating=TRUE,
+%   #       table.placement="H")
+% 
+% @
+% 
+% 
+% 
+% 
+% % 
+% % \section{Deliverable}
+% % \begin{description}
+% %   \item[IGV tracks] files and IGV batch script are on Box under \newline \href{https://stockholmuniversity.box.com/s/agelw5q631qb0no017esm0iu3oxuj1fd}{https://stockholmuniversity.box.com/s/agelw5q631qb0no017esm0iu3oxuj1fd}
+% % \end{description}
+
+\newpage
+\section{R session info}
+\label{sessionInfo}
+\scriptsize
+<<sessionInfo, echo=F, results='asis'>>=
+toLatex(sessionInfo(), locale = FALSE)
+@ 
+
+
+
+\newpage
+\printbibliography
+\end{document}  
+
